@@ -7,7 +7,7 @@ class Triangle {
     }
 }
 
-let triangle_lst = [];
+let triangles = [];
 
 let triangle = new Triangle(0.0, 0.0, 1.0, 0.0);
 
@@ -137,6 +137,7 @@ function drawTriangle(shader, cx, cy, sz, ag) {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 /*
+// OLD CODE, originally didn't work
 function drawSceneObjects() {
     for (let tri of triangle_lst){
         console.log(tri);
@@ -145,13 +146,16 @@ function drawSceneObjects() {
     console.log("Done")
 }
 */
+
+// Code created with help from Sam Gauck
 function drawSceneObjects() {
     for (let t of triangles) {
         drawTriangle(shader, t.centerx, t.centery, t.size, t.rotation);
     }
     let t = triangle
     drawTriangle(shader, t.centerx, t.centery, t.size, t.rotation);
-} 
+}
+
 function drawFrame() {
     // Ready the canvas and WebGL context.
     gl.clearColor(0.55, 0.5, 0.4, 1.0); // clay mud
@@ -205,8 +209,21 @@ function remain() {
     });
 }
 
+// Code to dubplicate the triangle
 function duplificate(){
-    console.log("boink");
+    console.log("DUPLIFICATE!!!")
+
+    let x = Math.random() * (1 - (-1)) - 1;
+    let y = Math.random() * (1 - (-1)) - 1;
+    let scale = Math.random() * (1 - 0.1) + 0.1;
+
+    // Save previous triangle to our list of triangles
+    triangles.push(triangle);
+    // Make a new triangle, and set it to the one that can be modified
+    let t = new Triangle(x, y, scale);
+
+    triangle = t;
+    drawFrame()
 }
 
 main();
