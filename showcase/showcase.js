@@ -43,6 +43,8 @@ let gMouseDrag   = false;
 //
 let gShowWhich = 1;
 
+let PHI = 1.618
+
 // ***** MAKERS *****
 //
 // Functions that describe objects in the showcase. These get called
@@ -239,6 +241,147 @@ function makeTetrahedron() {
     glEnd();
 }
 
+// Gabe's Shapes!!
+//
+// makeSphere
+//
+// the js code to create a sphere, how? IDK YET
+
+//
+// makeTorus
+//
+// no clue how im doing this either
+
+//
+// make other polygon
+// 
+// thinking of icosahedron??
+
+function makeIcosahedron(){
+
+    // draw an icosahedron
+    glBegin(GL_TRIANGLES, "Icosahedron", true);
+
+    let PHI = 1.618
+
+    // Define the three rectangles
+    // Rect1 Yellow
+    glColor3f(1.0,1.0,0.0);
+    glVertex3f(1.618,0.0,-1.0); // V1
+    glVertex3f(1.618,0.0,1.0); // V2
+    glVertex3f(-1.618,0.0,1.0); // V3
+    
+    //Cyan
+    glColor3f(0.0,1.0,1.0);
+    glVertex3f(-1.618,0.0,1.0); // V3
+    glVertex3f(-1.618,0.0,-1.0); // V4
+    glVertex3f(1.618,0.0,-1.0); // V2
+
+    // Rect2 Red/Pink
+    glColor3f(1.0,0.0,0.3);
+    glVertex3f(0.0,1.0,-1.618); // V5
+    glVertex3f(0.0,1.0,1.618); // V6 // Right Angle
+    glVertex3f(0.0,-1.0,1.618); // V7
+
+    // Green
+    glColor3f(0.0,1.0,0.0);
+    glVertex3f(0.0,-1.0,1.618);
+    glVertex3f(0.0,-1.0,-1.618); // V8 // Right Angle
+    glVertex3f(0.0,1.0,-1.618);
+
+    // Rect3 Black
+    glColor3f(0.0,0.0,0.0);
+    glVertex3f(-1.0,1.618,0.0); // V9
+    glVertex3f(1.0,1.618,0.0); // V10
+    glVertex3f(1.0,-1.618,0.0); // V11
+    
+    // Grey
+    glColor3f(0.5,0.5,0.5);
+    glVertex3f(1.0,-1.618,0.0);
+    glVertex3f(-1.0,-1.618,0.0); // V12
+    glVertex3f(-1.0,1.618,0.0);
+    
+    //Connecting Tris
+    //Blue
+    glColor3f(0.0,0.0,1.0);
+    glVertex3f(1.618,0.0,-1.0); // V1
+    glVertex3f(0.0,1.0,-1.618); // V5
+    glVertex3f(1.0,1.618,0.0); // V10
+    // Orange
+    glColor3f(1.0,0.5,0.0);
+    glVertex3f(-1.0,1.618,0.0); // V10 !!
+    glVertex3f(-1.618,0.0,1.0); // V3
+    glVertex3f(-1.618,0.0,-1.0); // V4
+    // Magenta
+    glColor3f(1.0,0.0,1.0);
+    glVertex3f(1.0,1.618,0.0); // V9
+    glVertex3f(1.618,0.0,-1.0); // V1
+    glVertex3f(1.618,0.0,1.0); // V2
+    //Mauve
+    glColor3f(0.7,0.4,0.6);
+    glVertex3f(-1.0,1.618,0.0); // V9
+    glVertex3f(1.0,1.618,0.0); // V10 !!
+    glVertex3f(0.0,1.0,-1.618); // V5
+    //Teal/grey-blue
+    glColor3f(0.4,0.6,0.7);
+    glVertex3f(-1.0,1.618,0.0); // V9
+    glVertex3f(1.0,1.618,0.0); // V10
+    glVertex3f(0.0,1.0,1.618); // V5
+    //Leaf-green
+    glColor3f(0.3,0.7,0.2);
+    glVertex3f(1.0,1.618,0.0); // V10
+    glVertex3f(0.0,1.0,1.618); // V6 // Right Angle
+    glVertex3f(1.618,0.0,1.0); // V2
+    //pink-white
+    glColor3f(1.0,0.7,0.7);
+    glVertex3f(1.618,0.0,1.0); // V2
+    glVertex3f(0.0,1.0,1.618); // V6 // Right Angle
+    glVertex3f(0.0,-1.0,1.618); // V7
+    // "brat" green
+    glColor3f(0.5,0.7,0.0);
+    glVertex3f(1.0,-1.618,0.0); // V9
+    glVertex3f(1.618,0.0,-1.0); // V1
+    glVertex3f(1.618,0.0,1.0); // V2
+    //purple
+    glColor3f(0.5,0.0,0.7);
+    glVertex3f(-1.0,-1.618,0.0); // V10
+    glVertex3f(-1.618,0.0,1.0); // V3
+    glVertex3f(-1.618,0.0,-1.0); // V4
+    //light-blue
+    glColor3f(0.8,0.8,1.0);
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(0.0,-1.0,1.618); 
+    //tan
+    glColor3f(0.9,0.7,0.6);
+    glVertex3f(1.618,0.0,-1.0); // V2
+    glVertex3f(0.0,1.0,-1.618); // V5
+    glVertex3f(0.0,-1.0,-1.618); // V8 // Right Angle
+    // orange-yellow?
+    glColor3f(1.0,0.8,0.4);
+    glVertex3f(1.0,-1.618,0.0); // V9
+    glVertex3f(-1.0,-1.618,0.0); // V8 // Right Angle
+    glVertex3f(0.0,-1.0,1.618); // V7
+    //light-grey
+    glColor3f(0.6,0.6,0.6);
+    glVertex3f(-1.618,0.0,-1.0); // V2
+    glVertex3f(0.0,1.0,-1.618); // V5
+    glVertex3f(0.0,-1.0,-1.618); // V8 // Right Angle
+    //light-light-blue
+    glColor3f(0.3,0.3,0.8);
+    glVertex3f(1.0,-1.618,0.0); // V9
+    glVertex3f(-1.0,-1.618,0.0); // V8 // Right Angle
+    glVertex3f(0.0,-1.0,-1.618); // V7
+    //RED
+    glColor3f(1.0,0.1,0.1);
+    glVertex3f(-1.0,-1.618,0.0); // V10 // purp teal/blue
+    glVertex3f(-1.618,0.0,1.0); //
+    glVertex3f(-1.618,0.0,-1.0); // V2
+
+
+    glEnd();
+}
+
 // ***** RENDERING *****
 //
 // Functions for displaying the selected object of the showcase.
@@ -267,6 +410,9 @@ function drawObject() {
     //
     // Add other objects for the assignment here.
     //
+    if (gShowWhich == 4) {
+        glBeginEnd("Icosahedron");
+    }
     
 }
 
@@ -323,7 +469,11 @@ function handleKey(key, x, y) {
     if (key == '3') {
         gShowWhich = 3;
     }
-    
+    //
+    if (key == '4') {
+        gShowWhich = 4;
+    }
+
     glutPostRedisplay();
 }
 
@@ -437,6 +587,7 @@ function main() {
     makeTetrahedron();
     makeCube();
     makeCylinder(24);
+    makeIcosahedron();
 
     // Register interaction callbacks.
     glutKeyboardFunc(handleKey);
