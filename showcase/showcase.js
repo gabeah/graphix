@@ -246,7 +246,56 @@ function makeTetrahedron() {
 // makeSphere
 //
 // the js code to create a sphere, how? IDK YET
+function makeSphere(segments, rings) {
+    //attempting to make a uv-sphere similar to how one is constructed in blender
+    const width = 1.0;
+    const num_segs = segments * 1.0;
+    const num_rings = rings * 1.0;
 
+    const dAngle = 2 * Math.PI / num_segs;
+
+    glBegin(GL_TRIANGLES,"Sphere", true);
+
+    for (let i = 0; i < num_segs; i+= 1) {
+        const aTop = dAngle * i;
+        const xTop0 = Math.cos(aTop);
+        const yTop0 = Math.sin(aTop);
+        const xTop1 = Math.cos(aTop + dAngle);
+        const yTop1 = Math.sin(aTop + dAngle);
+        const zval = (width / 2.0) - (width / num_segs)
+        if (i % 2 == 0) {
+            glColor3f(0.25, 0.50, 0.75);
+        } else {
+            glColor3f(0.50, 0.75, 0.80);
+        }
+        glVertex3f(  0.0,   0.0, width / 2.0);
+        glVertex3f(xTop0/(num_rings-1.0), yTop0/(num_rings-1.0), zval);
+        glVertex3f(xTop1/(num_rings-1.0), yTop1/(num_rings-1.0), zval);
+    }
+
+    //make a ring of triangles, try to do it iteratively, going ring by ring
+    for (let ring = 1; ring < (num_rings - 1); ring++){
+        for (let i = 0; i < num_segs; i += 1) {
+            const aMid = dAngle * i;
+            const xMid0 = Math.cos(aMid);
+            const yMid0 = Math.sin(aMid);
+            const xMid1 = Math.cos(aMid + dAngle);
+            const yMid1 = Math.sin(aMid + dAngle);
+            
+            glColor3f(0.25, 0.50, 0.75);
+            glVertex3f(xMid0, yMid0,  width / 2.0);
+            glVertex3f(xMid0, yMid0, -width / 2.0);
+            glVertex3f(xMid1, yMid1, -width / 2.0);
+
+            glColor3f(0.50, 0.75, 0.80);
+            glVertex3f(xMid0, yMid0,  width / 2.0);
+            glVertex3f(xMid1, yMid1, -width / 2.0);
+            glVertex3f(xMid1, yMid1,  width / 2.0);
+
+        }
+    }
+    glEnd();
+}
 //
 // makeTorus
 //
@@ -261,14 +310,18 @@ function makeIcosahedron(){
 
     // draw an icosahedron
     glBegin(GL_TRIANGLES, "Icosahedron", true);
-
-    let PHI = 1.618
-
+    // An icosahedron is defined by three rectangles
+    // which intersect, then draw triangles connecting
+    // verts of the rectangles to verts nearby.
+    //
+    // I define the rectangles, then the triangles (based on the quads)
+    // feel free to comment out the triangles to see the original quads.
+    //
     // Define the three rectangles
     // Rect1 Yellow
     glColor3f(1.0,1.0,0.0);
     glVertex3f(1.618,0.0,-1.0); // V1
-    glVertex3f(1.618,0.0,1.0); // V2
+    glVertex3f(1.618,0.0,1.0); // V2 // Right angle
     glVertex3f(-1.618,0.0,1.0); // V3
     
     //Cyan
@@ -301,52 +354,52 @@ function makeIcosahedron(){
     glVertex3f(-1.0,-1.618,0.0); // V12
     glVertex3f(-1.0,1.618,0.0);
     
-    //Connecting Tris
+    //Connecting Tris (Beware, there are many)
     //Blue
     glColor3f(0.0,0.0,1.0);
-    glVertex3f(1.618,0.0,-1.0); // V1
-    glVertex3f(0.0,1.0,-1.618); // V5
-    glVertex3f(1.0,1.618,0.0); // V10
+    glVertex3f(1.618,0.0,-1.0);
+    glVertex3f(0.0,1.0,-1.618);
+    glVertex3f(1.0,1.618,0.0); 
     // Orange
     glColor3f(1.0,0.5,0.0);
-    glVertex3f(-1.0,1.618,0.0); // V10 !!
-    glVertex3f(-1.618,0.0,1.0); // V3
-    glVertex3f(-1.618,0.0,-1.0); // V4
+    glVertex3f(-1.0,1.618,0.0); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(-1.618,0.0,-1.0);
     // Magenta
     glColor3f(1.0,0.0,1.0);
-    glVertex3f(1.0,1.618,0.0); // V9
-    glVertex3f(1.618,0.0,-1.0); // V1
-    glVertex3f(1.618,0.0,1.0); // V2
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(1.618,0.0,-1.0);
+    glVertex3f(1.618,0.0,1.0); 
     //Mauve
     glColor3f(0.7,0.4,0.6);
-    glVertex3f(-1.0,1.618,0.0); // V9
-    glVertex3f(1.0,1.618,0.0); // V10 !!
-    glVertex3f(0.0,1.0,-1.618); // V5
+    glVertex3f(-1.0,1.618,0.0);
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(0.0,1.0,-1.618);
     //Teal/grey-blue
     glColor3f(0.4,0.6,0.7);
-    glVertex3f(-1.0,1.618,0.0); // V9
-    glVertex3f(1.0,1.618,0.0); // V10
-    glVertex3f(0.0,1.0,1.618); // V5
+    glVertex3f(-1.0,1.618,0.0);
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(0.0,1.0,1.618); 
     //Leaf-green
     glColor3f(0.3,0.7,0.2);
-    glVertex3f(1.0,1.618,0.0); // V10
-    glVertex3f(0.0,1.0,1.618); // V6 // Right Angle
-    glVertex3f(1.618,0.0,1.0); // V2
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    glVertex3f(1.618,0.0,1.0); 
     //pink-white
     glColor3f(1.0,0.7,0.7);
-    glVertex3f(1.618,0.0,1.0); // V2
-    glVertex3f(0.0,1.0,1.618); // V6 // Right Angle
-    glVertex3f(0.0,-1.0,1.618); // V7
+    glVertex3f(1.618,0.0,1.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    glVertex3f(0.0,-1.0,1.618);
     // "brat" green
     glColor3f(0.5,0.7,0.0);
-    glVertex3f(1.0,-1.618,0.0); // V9
-    glVertex3f(1.618,0.0,-1.0); // V1
-    glVertex3f(1.618,0.0,1.0); // V2
+    glVertex3f(1.0,-1.618,0.0);
+    glVertex3f(1.618,0.0,-1.0);
+    glVertex3f(1.618,0.0,1.0); 
     //purple
     glColor3f(0.5,0.0,0.7);
-    glVertex3f(-1.0,-1.618,0.0); // V10
-    glVertex3f(-1.618,0.0,1.0); // V3
-    glVertex3f(-1.618,0.0,-1.0); // V4
+    glVertex3f(-1.0,-1.618,0.0);
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(-1.618,0.0,-1.0);
     //light-blue
     glColor3f(0.8,0.8,1.0);
     glVertex3f(-1.0,-1.618,0.0); 
@@ -354,30 +407,59 @@ function makeIcosahedron(){
     glVertex3f(0.0,-1.0,1.618); 
     //tan
     glColor3f(0.9,0.7,0.6);
-    glVertex3f(1.618,0.0,-1.0); // V2
-    glVertex3f(0.0,1.0,-1.618); // V5
-    glVertex3f(0.0,-1.0,-1.618); // V8 // Right Angle
+    glVertex3f(1.618,0.0,-1.0); 
+    glVertex3f(0.0,1.0,-1.618); 
+    glVertex3f(0.0,-1.0,-1.618); 
     // orange-yellow?
     glColor3f(1.0,0.8,0.4);
-    glVertex3f(1.0,-1.618,0.0); // V9
-    glVertex3f(-1.0,-1.618,0.0); // V8 // Right Angle
-    glVertex3f(0.0,-1.0,1.618); // V7
+    glVertex3f(1.0,-1.618,0.0); 
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(0.0,-1.0,1.618); 
     //light-grey
     glColor3f(0.6,0.6,0.6);
-    glVertex3f(-1.618,0.0,-1.0); // V2
-    glVertex3f(0.0,1.0,-1.618); // V5
-    glVertex3f(0.0,-1.0,-1.618); // V8 // Right Angle
+    glVertex3f(-1.618,0.0,-1.0); 
+    glVertex3f(0.0,1.0,-1.618); 
+    glVertex3f(0.0,-1.0,-1.618); 
     //light-light-blue
     glColor3f(0.3,0.3,0.8);
-    glVertex3f(1.0,-1.618,0.0); // V9
-    glVertex3f(-1.0,-1.618,0.0); // V8 // Right Angle
-    glVertex3f(0.0,-1.0,-1.618); // V7
+    glVertex3f(1.0,-1.618,0.0); 
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(0.0,-1.0,-1.618); 
     //RED
     glColor3f(1.0,0.1,0.1);
-    glVertex3f(-1.0,-1.618,0.0); // V10 // purp teal/blue
-    glVertex3f(-1.618,0.0,1.0); //
-    glVertex3f(-1.618,0.0,-1.0); // V2
-
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(-1.618,0.0,-1.0); 
+    //Black
+    glColor3f(0.0,0.0,0.0);
+    glVertex3f(0.0,1.0,-1.618); 
+    glVertex3f(-1.618,0.0,-1.0); 
+    glVertex3f(-1.0,1.618,0.0); 
+    //Bright-yellow
+    glColor3f(1.0,1.0,0.0);
+    glVertex3f(-1.618,0.0,-1.0); 
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(0.0,-1.0,-1.618); 
+    //dark-grey
+    glColor3f(0.4,0.4,0.4)
+    glVertex3f(1.618,0.0,1.0); 
+    glVertex3f(0.0,-1.0,1.618);
+    glVertex3f(1.0,-1.618,0.0);
+    //very-light-grey
+    glColor3f(0.9,0.9,0.85)
+    glVertex3f(0.0,-1.0,-1.618); 
+    glVertex3f(1.0,-1.618,0.0);
+    glVertex3f(1.618,0.0,-1.0); 
+    //eycalyptus
+    glColor3f(0.3,1.0,0.7);
+    glVertex3f(0.0,-1.0,1.618); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    //roywal purple (last one PHEW)
+    glColor3f(0.4,0.3,0.6);
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    glVertex3f(-1.0,1.618,0.0); 
 
     glEnd();
 }
@@ -412,6 +494,9 @@ function drawObject() {
     //
     if (gShowWhich == 4) {
         glBeginEnd("Icosahedron");
+    }
+    if (gShowWhich == 5) {
+        glBeginEnd("Sphere");
     }
     
 }
@@ -472,6 +557,9 @@ function handleKey(key, x, y) {
     //
     if (key == '4') {
         gShowWhich = 4;
+    }
+    if (key == '5') {
+        gShowWhich = 5;
     }
 
     glutPostRedisplay();
@@ -588,6 +676,7 @@ function main() {
     makeCube();
     makeCylinder(24);
     makeIcosahedron();
+    makeSphere(4,4);
 
     // Register interaction callbacks.
     glutKeyboardFunc(handleKey);
