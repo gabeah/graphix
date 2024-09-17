@@ -243,54 +243,79 @@ function makeTetrahedron() {
 
 // Gabe's Shapes!!
 //
-// makeSphere
+//makeSphere
 //
 // the js code to create a sphere, how? IDK YET
+// Got some help/hints from Sam Gauck on this
 function makeSphere(segments, rings) {
     //attempting to make a uv-sphere similar to how one is constructed in blender
-    const width = 1.0;
-    const num_segs = segments * 1.0;
-    const num_rings = rings * 1.0;
+    const width = 2.0;
+    const num_segs = segments;
+    const num_rings = rings;
+
+    const ring_frac = width / num_rings;
+    //const slice_frac = width / num_segs;
 
     const dAngle = 2 * Math.PI / num_segs;
 
     glBegin(GL_TRIANGLES,"Sphere", true);
-
+    
     for (let i = 0; i < num_segs; i+= 1) {
         const aTop = dAngle * i;
-        const xTop0 = Math.cos(aTop);
-        const yTop0 = Math.sin(aTop);
-        const xTop1 = Math.cos(aTop + dAngle);
-        const yTop1 = Math.sin(aTop + dAngle);
-        const zval = (width / 2.0) - (width / num_segs)
+        const xTop0 = (width / 2.0) * (Math.cos(aTop));
+        const yTop0 = (width / 2.0) * (Math.sin(aTop));
+        const xTop1 = (width / 2.0) * Math.cos(aTop + dAngle);
+        const yTop1 = (width / 2.0) * Math.sin(aTop + dAngle);
+        const zval = (width / 2.0) - (width / num_rings)
         if (i % 2 == 0) {
             glColor3f(0.25, 0.50, 0.75);
         } else {
             glColor3f(0.50, 0.75, 0.80);
         }
+        glVertex3f(  0.0,   0.0, -width / 2.0);
+        glVertex3f(xTop0, yTop0, -zval);
+        glVertex3f(xTop1, yTop1, -zval);
+
         glVertex3f(  0.0,   0.0, width / 2.0);
-        glVertex3f(xTop0/(num_rings-1.0), yTop0/(num_rings-1.0), zval);
-        glVertex3f(xTop1/(num_rings-1.0), yTop1/(num_rings-1.0), zval);
+        glVertex3f(xTop0, yTop0, zval);
+        glVertex3f(xTop1, yTop1, zval);
     }
 
+
     //make a ring of triangles, try to do it iteratively, going ring by ring
-    for (let ring = 1; ring < (num_rings - 1); ring++){
+    for (let ring = 1; ring < (num_rings-1); ring++){
+        // Create var about the top and bottom of the ring
+
+        const ring_top = (width/2.0) * (Math.cos(dAngle * ring));
+        const ring_bottom = (width /2.0) * (Math.cos(dAngle * (ring + 1)));
+
+        const ring_radius = (width / 2.0) * Math.sin(dAngle * ring);
+        const rung_radius = (width / 2.0) * Math.sin(dAngle * (ring + 1));
+
         for (let i = 0; i < num_segs; i += 1) {
             const aMid = dAngle * i;
-            const xMid0 = Math.cos(aMid);
-            const yMid0 = Math.sin(aMid);
-            const xMid1 = Math.cos(aMid + dAngle);
-            const yMid1 = Math.sin(aMid + dAngle);
             
+            //const ring_count1 = (width / num_rings) * (ring + 1) 
+            const xMid0 = Math.cos(aMid) * (ring_radius);
+            const yMid0 = Math.sin(aMid) * (ring_radius);
+            const xMid1 = Math.cos(aMid + dAngle) * (ring_radius);
+            const yMid1 = Math.sin(aMid + dAngle) * (ring_radius);
+            //console.log(xMid0, xMid1,yMid0, yMid1);
+
+            const xMid2 = Math.cos(aMid) * (rung_radius);
+            const yMid2 = Math.sin(aMid) * (rung_radius);
+            const xMid3 = Math.cos(aMid + dAngle) * (rung_radius);
+            const yMid3 = Math.sin(aMid + dAngle) * (rung_radius);
+
             glColor3f(0.25, 0.50, 0.75);
-            glVertex3f(xMid0, yMid0,  width / 2.0);
-            glVertex3f(xMid0, yMid0, -width / 2.0);
-            glVertex3f(xMid1, yMid1, -width / 2.0);
+            glVertex3f(xMid0, yMid0,  ring_top);
+            glVertex3f(xMid2, yMid2, ring_bottom);
+            glVertex3f(xMid3, yMid3, ring_bottom);
 
             glColor3f(0.50, 0.75, 0.80);
-            glVertex3f(xMid0, yMid0,  width / 2.0);
-            glVertex3f(xMid1, yMid1, -width / 2.0);
-            glVertex3f(xMid1, yMid1,  width / 2.0);
+            glVertex3f(xMid0, yMid0,  ring_top);
+            glVertex3f(xMid3, yMid3, ring_bottom);
+            glVertex3f(xMid1, yMid1,  ring_top);
 
         }
     }
@@ -462,6 +487,13 @@ function makeIcosahedron(){
     glVertex3f(-1.0,1.618,0.0); 
 
     glEnd();
+}
+
+// revolution!
+// Function to take an object and revolve around an axis
+
+function makeRevolution(){
+
 }
 
 // ***** RENDERING *****
@@ -676,7 +708,7 @@ function main() {
     makeCube();
     makeCylinder(24);
     makeIcosahedron();
-    makeSphere(4,4);
+    makeSphere(6,4);
 
     // Register interaction callbacks.
     glutKeyboardFunc(handleKey);
