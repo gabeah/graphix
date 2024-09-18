@@ -247,20 +247,23 @@ function makeTetrahedron() {
 //
 // the js code to create a sphere, how? IDK YET
 // Got some help/hints from Sam Gauck on this
-function makeSphere(segments, rings) {
-    //attempting to make a uv-sphere similar to how one is constructed in blender
+function makeSphere(glSmoothness) {
+    // begin by defining the variables
     const width = 2.0;
-    const num_segs = segments;
-    const num_rings = rings;
-
-    const ring_frac = width / num_rings;
-    //const slice_frac = width / num_segs;
+    // segments and rings used to be two paramaters defining the number
+    // of longitudinal and latitudinal slices respectively
+    const num_segs = glSmoothness;
+    const num_rings = glSmoothness;
 
     const dAngle = 2 * Math.PI / num_segs;
 
     glBegin(GL_TRIANGLES,"Sphere", true);
     
-    for (let i = 0; i < num_segs; i+= 1) {
+    /*
+    // NOTE:    Somehow, I phased out the need for the top and bottom to be calculated
+    //          since the below double loop does it iteritavely. The parity is weird though
+    // Construct both the bottom and the top at the same time
+    for (let i = 0; i < num_segs/2; i+= 1) {
         const aTop = dAngle * i;
         const xTop0 = (width / 2.0) * (Math.cos(aTop));
         const yTop0 = (width / 2.0) * (Math.sin(aTop));
@@ -273,40 +276,51 @@ function makeSphere(segments, rings) {
             glColor3f(0.50, 0.75, 0.80);
         }
         glVertex3f(  0.0,   0.0, -width / 2.0);
-        glVertex3f(xTop0, yTop0, -zval);
-        glVertex3f(xTop1, yTop1, -zval);
+        glVertex3f(xTop0/num_segs, yTop0/num_segs, -zval);
+        glVertex3f(xTop1/num_segs, yTop1/num_segs, -zval);
 
+        if (i % 2 == 0) {
+            glColor3f(0.8, 0.75, 0.40);
+        } else {
+            glColor3f(0.25, 0.50, 0.75);
+
+        }
         glVertex3f(  0.0,   0.0, width / 2.0);
-        glVertex3f(xTop0, yTop0, zval);
-        glVertex3f(xTop1, yTop1, zval);
-    }
+        glVertex3f(xTop0/num_segs, yTop0/num_segs, zval);
+        glVertex3f(xTop1/num_segs, yTop1/num_segs, zval);
+    }*/
 
 
     //make a ring of triangles, try to do it iteratively, going ring by ring
-    for (let ring = 1; ring < (num_rings-1); ring++){
+    for (let ring = 0; ring < (num_rings); ring++){
         // Create var about the top and bottom of the ring
-
         const ring_top = (width/2.0) * (Math.cos(dAngle * ring));
         const ring_bottom = (width /2.0) * (Math.cos(dAngle * (ring + 1)));
 
+        // Ring and Rung radius are a calculation of how far out the top
+        // and bottom of each ring should be from center
         const ring_radius = (width / 2.0) * Math.sin(dAngle * ring);
         const rung_radius = (width / 2.0) * Math.sin(dAngle * (ring + 1));
 
-        for (let i = 0; i < num_segs; i += 1) {
+        // Loop through every slice in the ring (named segments), then create
+        // a quad based on the input information
+        for (let i = 0; i < num_rings/2; i += 1) {
             const aMid = dAngle * i;
             
-            //const ring_count1 = (width / num_rings) * (ring + 1) 
+            // Mid0 and Mid1 are the coordinates for the top of the ring
+            // based on the ring radius
             const xMid0 = Math.cos(aMid) * (ring_radius);
             const yMid0 = Math.sin(aMid) * (ring_radius);
             const xMid1 = Math.cos(aMid + dAngle) * (ring_radius);
             const yMid1 = Math.sin(aMid + dAngle) * (ring_radius);
-            //console.log(xMid0, xMid1,yMid0, yMid1);
 
+            // Same thing, but for the bottom of the ring and rung_radius
             const xMid2 = Math.cos(aMid) * (rung_radius);
             const yMid2 = Math.sin(aMid) * (rung_radius);
             const xMid3 = Math.cos(aMid + dAngle) * (rung_radius);
             const yMid3 = Math.sin(aMid + dAngle) * (rung_radius);
 
+            // Draw the triangles (finally)
             glColor3f(0.25, 0.50, 0.75);
             glVertex3f(xMid0, yMid0,  ring_top);
             glVertex3f(xMid2, yMid2, ring_bottom);
@@ -325,7 +339,9 @@ function makeSphere(segments, rings) {
 // makeTorus
 //
 // no clue how im doing this either
-
+function makeTorus(glSmoothness) {
+    
+}
 //
 // make other polygon
 // 
@@ -708,7 +724,7 @@ function main() {
     makeCube();
     makeCylinder(24);
     makeIcosahedron();
-    makeSphere(6,4);
+    makeSphere(24);
 
     // Register interaction callbacks.
     glutKeyboardFunc(handleKey);
