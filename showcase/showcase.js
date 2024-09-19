@@ -43,7 +43,12 @@ let gMouseDrag   = false;
 //
 let gShowWhich = 1;
 
-let PHI = 1.618
+let PHI = 1.618;
+let glSmoothness = 12;
+
+// MakeRevolution list of points
+let points = [[0,1],[0.5,1],[1,.5],[.5,0],[1,-.5],[0.5,-1],[0,-1]]
+let points1 = [[1,0],[1,.4],[.2,.4],[.2,.6],[.6,0],0,0]
 
 // ***** MAKERS *****
 //
@@ -247,49 +252,18 @@ function makeTetrahedron() {
 //
 // the js code to create a sphere, how? IDK YET
 // Got some help/hints from Sam Gauck on this
-function makeSphere(glSmoothness) {
+function makeSphere(smoothness) {
     // begin by defining the variables
     const width = 2.0;
     // segments and rings used to be two paramaters defining the number
     // of longitudinal and latitudinal slices respectively
-    const num_segs = glSmoothness;
-    const num_rings = glSmoothness;
+    const num_segs = smoothness;
+    const num_rings = smoothness;
 
     const dAngle = 2 * Math.PI / num_segs;
 
+    // Begin making a sphere
     glBegin(GL_TRIANGLES,"Sphere", true);
-    
-    /*
-    // NOTE:    Somehow, I phased out the need for the top and bottom to be calculated
-    //          since the below double loop does it iteritavely. The parity is weird though
-    // Construct both the bottom and the top at the same time
-    for (let i = 0; i < num_segs/2; i+= 1) {
-        const aTop = dAngle * i;
-        const xTop0 = (width / 2.0) * (Math.cos(aTop));
-        const yTop0 = (width / 2.0) * (Math.sin(aTop));
-        const xTop1 = (width / 2.0) * Math.cos(aTop + dAngle);
-        const yTop1 = (width / 2.0) * Math.sin(aTop + dAngle);
-        const zval = (width / 2.0) - (width / num_rings)
-        if (i % 2 == 0) {
-            glColor3f(0.25, 0.50, 0.75);
-        } else {
-            glColor3f(0.50, 0.75, 0.80);
-        }
-        glVertex3f(  0.0,   0.0, -width / 2.0);
-        glVertex3f(xTop0/num_segs, yTop0/num_segs, -zval);
-        glVertex3f(xTop1/num_segs, yTop1/num_segs, -zval);
-
-        if (i % 2 == 0) {
-            glColor3f(0.8, 0.75, 0.40);
-        } else {
-            glColor3f(0.25, 0.50, 0.75);
-
-        }
-        glVertex3f(  0.0,   0.0, width / 2.0);
-        glVertex3f(xTop0/num_segs, yTop0/num_segs, zval);
-        glVertex3f(xTop1/num_segs, yTop1/num_segs, zval);
-    }*/
-
 
     //make a ring of triangles, try to do it iteratively, going ring by ring
     for (let ring = 0; ring < (num_rings); ring++){
@@ -340,7 +314,69 @@ function makeSphere(glSmoothness) {
 //
 // no clue how im doing this either
 function makeTorus(glSmoothness) {
+// Thanks to Zeke for some help on figuring out the math
     
+    // constants:   t_radius: total torus radius
+    //              r_radius: radius of inner ring
+    //              segments: smoothness
+    const t_radius = 1.0;
+    const r_radius = 0.5;
+    const segments = glSmoothness;
+    
+    const dAngle = (2 * Math.PI) / segments;
+
+    glBegin(GL_TRIANGLES, "Torus", true);
+
+    for (let seg = 0; seg < segments; seg++){
+
+        // Calculate the circle of center points
+        const aSeg = dAngle * seg;
+        const xSeg0_C = Math.cos(aSeg);
+        const ySeg0_C = Math.sin(aSeg);
+        const xSeg1_C = Math.cos(aSeg + dAngle);
+        const ySeg1_C = Math.sin(aSeg + dAngle);
+        
+        // Draw it if you wish
+        /*if (seg % 2 == 0) {
+            glColor3f(0.25, 0.50, 0.75);
+        } else {
+            glColor3f(0.50, 0.75, 0.80);
+        }
+        
+        glVertex3f(  0.0,   0.0, 0.0);
+        glVertex3f(xSeg0_C, ySeg0_C, 0.0);
+        glVertex3f(xSeg1_C, ySeg1_C, 0.0);*/
+
+        for (let j = 0; j < segments; j++) {
+
+            // Need to create a circle that is specified around that point
+            // Create a bunch of constants specific to each ring
+            // NOTE: Althrough similarly named, the _C constants refer to the circle of centerpoints
+            //      while the _R constants refer to the points on the ring (that then rotate around origin)
+            const rSeg = dAngle * j;
+            const xSeg0_R = Math.cos(rSeg);
+            const ySeg0_R = Math.sin(rSeg); //jSin
+            const xSeg1_R = Math.cos(rSeg + dAngle);
+            const ySeg1_R = Math.sin(rSeg + dAngle); //jSin
+
+            // Draw the ring
+            if (j % 2 == 0) {
+                glColor3f(0.25,0.75,0.50);
+            } else {
+                glColor3f(0.8,0.5,0.75);
+            }
+            // Zeke helped me with getting these ratios right
+            glVertex3f(xSeg0_C * (t_radius + xSeg0_R * r_radius), ySeg0_C * (t_radius + xSeg0_R * r_radius), ySeg0_R + r_radius);
+            glVertex3f(xSeg1_C * (t_radius + xSeg0_R * r_radius), ySeg1_C * (t_radius + xSeg0_R * r_radius), ySeg0_R + r_radius);
+            glVertex3f(xSeg0_C * (t_radius + xSeg1_R * r_radius), ySeg0_C * (t_radius + xSeg1_R * r_radius), ySeg1_R + r_radius);
+
+            glVertex3f(xSeg1_C * (t_radius + xSeg1_R * r_radius), ySeg1_C * (t_radius + xSeg1_R * r_radius), ySeg1_R + r_radius);
+            glVertex3f(xSeg1_C * (t_radius + xSeg0_R * r_radius), ySeg1_C * (t_radius + xSeg0_R * r_radius), ySeg0_R + r_radius);
+            glVertex3f(xSeg0_C * (t_radius + xSeg1_R * r_radius), ySeg0_C * (t_radius + xSeg1_R * r_radius), ySeg1_R + r_radius);
+
+        }
+    }
+    glEnd();
 }
 //
 // make other polygon
@@ -507,11 +543,102 @@ function makeIcosahedron(){
 
 // revolution!
 // Function to take an object and revolve around an axis
+function makeRevolution(smoothness, points){
 
-function makeRevolution(){
+    glBegin(GL_TRIANGLES, "Revolution1", true)
+        const numFacets = smoothness;
+        const dAngle = 2.0 * Math.PI / numFacets;
+        const width = 1.0;
+
+        // Loop for each slice of the object-to-be
+        for(let facet = 0; facet < numFacets; facet++){
+            const aCoord = dAngle * facet;
+
+            // Also loop for each point in the object
+            for(let i = 0; i < (points.length - 1); i++) {
+                console.log(points[i])
+
+                // It's not pretty, but these are all the points that
+                // are rotated around
+                const x0 = points[i][0];
+                const xa0 =  (width * Math.sin(aCoord));
+                const z0 = points[i][0];
+                const za0 = Math.cos(aCoord);
+                const x1 = points[i+1][0];
+                const xa1 = (width * Math.sin(aCoord + dAngle));
+                const z1 = points[i+1][0];
+                const za1 = Math.cos(aCoord + dAngle);
+
+                const y0 = points[i][1];
+                const y1 = points[i+1][1];
+
+                if (i % 2 == 0) {
+                    glColor3f(0.5,0.3,0.3);
+                } else {
+                    glColor3f(0.3,0.5,0.3);
+                }
+
+                //  Draw it again
+                glVertex3f(x0 * xa0,y0,z0 * za0);
+                glVertex3f(x1 * xa0,y1,z1 * za0);
+                glVertex3f(x0 * xa1,y0,z0 * za1);
+
+                glVertex3f(x1 * xa1,y1,z1 * za1);
+                glVertex3f(x1 * xa0,y1,z1 * za0);
+                glVertex3f(x0 * xa1,y0,z0 * za1);
+
+            }
+
+        }
+    glEnd();
 
 }
+// Essentially a carbon copy of the first function
+function makeRevolution(smoothness, points){
 
+    glBegin(GL_TRIANGLES, "Revolution2", true)
+        const numFacets = smoothness;
+        const dAngle = 2.0 * Math.PI / numFacets;
+        const width = 1.0;
+
+        for(let facet = 0; facet < numFacets; facet++){
+            const aCoord = dAngle * facet;
+
+            for(let i = 0; i < (points.length - 1); i++) {
+                console.log(points[i])
+
+                const x0 = points[i][0];
+                const xa0 =  (width * Math.sin(aCoord));
+                const z0 = points[i][0];
+                const za0 = Math.cos(aCoord);
+                const x1 = points[i+1][0];
+                const xa1 = (width * Math.sin(aCoord + dAngle));
+                const z1 = points[i+1][0];
+                const za1 = Math.cos(aCoord + dAngle);
+
+                const y0 = points[i][1];
+                const y1 = points[i+1][1];
+
+                if (i % 2 == 0) {
+                    glColor3f(0.5,0.3,0.3);
+                } else {
+                    glColor3f(0.3,0.5,0.3);
+                }
+
+                glVertex3f(x0 * xa0,y0,z0 * za0);
+                glVertex3f(x1 * xa0,y1,z1 * za0);
+                glVertex3f(x0 * xa1,y0,z0 * za1);
+
+                glVertex3f(x1 * xa1,y1,z1 * za1);
+                glVertex3f(x1 * xa0,y1,z1 * za0);
+                glVertex3f(x0 * xa1,y0,z0 * za1);
+
+            }
+
+        }
+    glEnd();
+
+}
 // ***** RENDERING *****
 //
 // Functions for displaying the selected object of the showcase.
@@ -545,6 +672,15 @@ function drawObject() {
     }
     if (gShowWhich == 5) {
         glBeginEnd("Sphere");
+    }
+    if (gShowWhich == 6) {
+        glBeginEnd("Torus");
+    }
+    if (gShowWhich == 7) {
+        glBeginEnd("Revolution1");
+    }
+    if (gShowWhich == 8) {
+        glBeginEnd("Revolution2");
     }
     
 }
@@ -609,6 +745,16 @@ function handleKey(key, x, y) {
     if (key == '5') {
         gShowWhich = 5;
     }
+    if (key == '6') {
+        gShowWhich = 6;
+    }
+    if (key == '7') {
+        gShowWhich = 7;
+    }
+    if (key == '8') {
+        gShowWhich = 8;
+    }
+
 
     glutPostRedisplay();
 }
@@ -707,6 +853,17 @@ function resizeWindow(w, h) {
     glutPostRedisplay();
 }
 
+
+//
+// Smoothness modification
+//
+
+function changeSmoothness(val){
+    glSmoothness = glSmoothness + val;
+    console.log("Changed!!")
+    glutPostRedisplay();
+}
+
 function main() {
     /*
      * The main procedure, sets up GL and GLUT.
@@ -722,9 +879,13 @@ function main() {
     // Build the renderable objects.
     makeTetrahedron();
     makeCube();
-    makeCylinder(24);
+    makeCylinder(glSmoothness);
     makeIcosahedron();
-    makeSphere(24);
+    makeSphere(glSmoothness);
+    makeTorus(glSmoothness);
+    makeRevolution(glSmoothness, points);
+    makeRevolution(glSmoothness, points1);
+
 
     // Register interaction callbacks.
     glutKeyboardFunc(handleKey);

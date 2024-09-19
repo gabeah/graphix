@@ -6,6 +6,6 @@ I have created an icosahedron and almost finished my work with the sphere. I rec
 
 I have had some trouble figuring out how to calculate the x&y of the ring. It has largely been fixed, due to actually adding trig functions to do the math needed (that is where Sam assisted).
 
-As it currently stands, the sphere is functional, but you will notice the parity is flipped across the x-axis.
+For the torus and revolution, I also struggled a lot with figuring out how to do transformations between the various points. I got some help from Zeke who helped me get those ratios down.
 
-I am preparing to begin work on the torus (and then after that the revolution).
+I plan to resubmit this later today (9/19) with better code comments, a GL slider, and also some prettier shapes to revolve around.
