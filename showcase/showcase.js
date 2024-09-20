@@ -312,7 +312,6 @@ function makeSphere(smoothness) {
 //
 // makeTorus
 //
-// no clue how im doing this either
 function makeTorus(glSmoothness) {
 // Thanks to Zeke for some help on figuring out the math
     
@@ -543,7 +542,7 @@ function makeIcosahedron(){
 
 // revolution!
 // Function to take an object and revolve around an axis
-function makeRevolution(smoothness, points){
+function makeRevolution1(smoothness, points){
 
     glBegin(GL_TRIANGLES, "Revolution1", true)
         const numFacets = smoothness;
@@ -594,7 +593,7 @@ function makeRevolution(smoothness, points){
 
 }
 // Essentially a carbon copy of the first function
-function makeRevolution(smoothness, points){
+function makeRevolution2(smoothness, points){
 
     glBegin(GL_TRIANGLES, "Revolution2", true)
         const numFacets = smoothness;
@@ -859,8 +858,15 @@ function resizeWindow(w, h) {
 //
 
 function changeSmoothness(val){
-    glSmoothness = glSmoothness + val;
+    glSmoothness = val;
+    if ((-1)**val < 0){glSmoothness = val - 1;}
     console.log("Changed!!")
+    console.log(val)
+    makeTorus(glSmoothness);
+    makeCylinder(glSmoothness);
+    makeSphere(glSmoothness);
+    makeRevolution1(glSmoothness, points);
+    makeRevolution2(glSmoothness, points1)
     glutPostRedisplay();
 }
 
@@ -883,8 +889,8 @@ function main() {
     makeIcosahedron();
     makeSphere(glSmoothness);
     makeTorus(glSmoothness);
-    makeRevolution(glSmoothness, points);
-    makeRevolution(glSmoothness, points1);
+    makeRevolution1(glSmoothness, points);
+    makeRevolution2(glSmoothness, points1);
 
 
     // Register interaction callbacks.
