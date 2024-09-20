@@ -48,7 +48,7 @@ let glSmoothness = 12;
 
 // MakeRevolution list of points
 let points = [[0,1],[0.5,1],[1,.5],[.5,0],[1,-.5],[0.5,-1],[0,-1]]
-let points1 = [[1,0],[1,.4],[.2,.4],[.2,.6],[.6,0],0,0]
+let points1 = [[0,0.9],[0,1],[.4,1],[.4,.2],[.6,.2],[.6,0],[.3,0],[0.3,.9],[0,.9]]
 
 // ***** MAKERS *****
 //
@@ -542,6 +542,7 @@ function makeIcosahedron(){
 
 // revolution!
 // Function to take an object and revolve around an axis
+// This one makes a yo-yo looking object!
 function makeRevolution1(smoothness, points){
 
     glBegin(GL_TRIANGLES, "Revolution1", true)
@@ -571,10 +572,11 @@ function makeRevolution1(smoothness, points){
                 const y0 = points[i][1];
                 const y1 = points[i+1][1];
 
+                // Fun colors
                 if (i % 2 == 0) {
-                    glColor3f(0.5,0.3,0.3);
+                    glColor3f(0.1,0.3,0.3);
                 } else {
-                    glColor3f(0.3,0.5,0.3);
+                    glColor3f(0.3,0.5,0.8);
                 }
 
                 //  Draw it again
@@ -582,6 +584,11 @@ function makeRevolution1(smoothness, points){
                 glVertex3f(x1 * xa0,y1,z1 * za0);
                 glVertex3f(x0 * xa1,y0,z0 * za1);
 
+                if (i % 2 != 0) {
+                    glColor3f(0.1,0.3,0.8);
+                } else {
+                    glColor3f(0.2,0.8,0.2);
+                }
                 glVertex3f(x1 * xa1,y1,z1 * za1);
                 glVertex3f(x1 * xa0,y1,z1 * za0);
                 glVertex3f(x0 * xa1,y0,z0 * za1);
@@ -618,8 +625,9 @@ function makeRevolution2(smoothness, points){
                 const y0 = points[i][1];
                 const y1 = points[i+1][1];
 
+                // Fun little colors!
                 if (i % 2 == 0) {
-                    glColor3f(0.5,0.3,0.3);
+                    glColor3f(0.5,0.3,0.9);
                 } else {
                     glColor3f(0.3,0.5,0.3);
                 }
@@ -627,6 +635,12 @@ function makeRevolution2(smoothness, points){
                 glVertex3f(x0 * xa0,y0,z0 * za0);
                 glVertex3f(x1 * xa0,y1,z1 * za0);
                 glVertex3f(x0 * xa1,y0,z0 * za1);
+
+                if (i % 2 != 0) {
+                    glColor3f(0.8,0.1,0.3);
+                } else {
+                    glColor3f(0.3,0.8,0.3);
+                }
 
                 glVertex3f(x1 * xa1,y1,z1 * za1);
                 glVertex3f(x1 * xa0,y1,z1 * za0);
