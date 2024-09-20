@@ -365,9 +365,9 @@ void main() {
     <button onClick="glButtonAsKey('5')">5</button>
     <button onClick="glButtonAsKey('6')">6</button>
     <button onClick="glButtonAsKey('7')">7</button>
-    <button onclick="glButtonAsKey('8')">8</button>
+    <button onClick="glButtonAsKey('8')">8</button>
     <p>Smoothness (when applicable)</p>
-
+    <input type="range" id="smoothness" width="10" min="4" max="32" onChange="glSmoothness(this.value)">smoothness</input>
     <p>Other params if needed</p>
   </body>
 </html>
