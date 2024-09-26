@@ -180,6 +180,7 @@ function RECT() {
 // Below are a series of procedures that draw the elements of a
 // scene containing a house, a tree, and the sun.
 //
+/*
 function WINDOW() {
     glColor3f(1.0,1.0,1.0)
     glPushMatrix()
@@ -316,7 +317,129 @@ function drawHouse() {
 
     glPopMatrix();
 }
+*/
 
+// Gabe's Code
+// Draw ocean w/ wave
+
+function drawWave() {
+    
+    // Draw everything in relation to each other
+
+    glPushMatrix();
+    // Back of wave
+    glColor3f(0.0,0.3,1.0);
+    glScalef(1.2,1.2,1.2);
+    glTranslatef(-1,-0.3,0);
+    DISK();
+
+    // Back of wave, cutout
+    glPushMatrix();
+    glColor3f(1.0,1.0,1.0);
+    glTranslatef(-1.48,1.6,0);
+    glScalef(2.03,2,2);
+    DISK();
+    
+    // Cresting part of wave
+    glPushMatrix();
+    glColor3f(0,0.3,1.0);
+    glScalef(1/2.03,1/2,1/2)
+    glScalef(1/1.2,1/1.2,1/1.2)
+    glTranslatef(2.97,-1.55,0)
+    DISK();
+
+    // Draw crest cutout
+
+    glPushMatrix();
+    glScalef(0.7,0.7,0.7);
+    glTranslatef(0.71,-0.1,0.0)
+    glColor3f(1.0,1.0,1.0);
+    DISK();
+
+    // Restore
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+
+}
+// It ain't pretty, but it works
+function drawOcean() {
+    
+    glPushMatrix();
+    glScalef(0.2,0.2,0)
+    glTranslatef(15 + (gLocation.x * 3),-3.15,0)
+    drawWave();
+
+    //Probably can do this recursively, but this works for now
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+    
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+    
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    glPushMatrix();
+    glTranslatef(-3,0,0)
+    drawWave();
+
+    
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    glPopMatrix();
+    
+
+    glPushMatrix();
+    glScalef(5,1.7,0);
+    glTranslatef(-0.5,-1.45,0)
+    glColor3f(0,0.3,1.0);
+    BOX();
+
+    glPopMatrix();
+}
 
 // ***** RECURSIVE *****
 
@@ -671,6 +794,7 @@ function drawRoom() {
 function drawStillLife() {
 
     drawRoom();
+    drawTable(1.0,0.5,0.1);
 
 }
 
@@ -883,7 +1007,9 @@ function draw() {
         // at (-2.5,-2) and an upper right corner at (2.5,2). The depth
         // values (i.e the z values) range between -2 and 2.
         //
-        drawHouse();
+        //drawHouse();
+        //drawWave();
+        drawOcean();
         
     } else if (gScene == "recursive") {
 
