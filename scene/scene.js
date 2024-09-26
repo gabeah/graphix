@@ -335,7 +335,7 @@ function drawWave() {
 
     // Back of wave, cutout
     glPushMatrix();
-    glColor3f(1.0,1.0,1.0);
+    glColor3f(0.8, 0.9, 1.0);
     glTranslatef(-1.48,1.6,0);
     glScalef(2.03,2,2);
     DISK();
@@ -353,7 +353,7 @@ function drawWave() {
     glPushMatrix();
     glScalef(0.7,0.7,0.7);
     glTranslatef(0.71,-0.1,0.0)
-    glColor3f(1.0,1.0,1.0);
+    glColor3f(0.8, 0.9, 1.0);
     DISK();
 
     // Restore
