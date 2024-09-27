@@ -363,6 +363,22 @@ function drawWave() {
     glPopMatrix();
 
 }
+
+function drawBoat() {
+
+    glColor3f(0.4,0.4,0.4);
+    glPushMatrix();
+    glTranslatef(-.5,-1,0);
+    glScalef(0.2,1,0)
+    BOX();
+    glPushMatrix();
+    glScalef(.5,.05,1)
+    glTranslatef(1,0,0)
+    DISK();
+    glPopMatrix();
+    glPopMatrix();
+}
+
 // It ain't pretty, but it works
 function drawOcean() {
     
@@ -1007,9 +1023,8 @@ function draw() {
         // at (-2.5,-2) and an upper right corner at (2.5,2). The depth
         // values (i.e the z values) range between -2 and 2.
         //
-        //drawHouse();
-        //drawWave();
         drawOcean();
+        drawBoat();
         
     } else if (gScene == "recursive") {
 
