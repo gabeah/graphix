@@ -129,6 +129,24 @@ function makeDISK() {
     }
     glEnd();
 }
+//
+function makeHEX() {
+    glBegin(GL_TRIANGLES,"HEX");
+    const sides = 6;
+    const dtheta = 2.0 * Math.PI / sides;
+    for (let i = 0; i < 6; i++) {
+        const theta = i * dtheta;
+        // draw a pie slice on the disk
+        glVertex3f(0.0,0.0,0.0);
+        glVertex3f(Math.cos(theta),
+                   Math.sin(theta),
+                   0.0);
+        glVertex3f(Math.cos(theta + dtheta),
+                   Math.sin(theta + dtheta),
+                   0.0);
+    }
+    glEnd();
+}
 
 // RTRI
 //
@@ -146,6 +164,10 @@ function RTRI() {
 //
 function DISK() {
     glBeginEnd("DISK");
+}
+
+function HEX() {
+    glBeginEnd("HEX");
 }
 
 // BOX
@@ -174,150 +196,6 @@ function RECT() {
     glPopMatrix()
 
 }
-
-// WINDOW, DOOR, HOUSE, TREE
-//
-// Below are a series of procedures that draw the elements of a
-// scene containing a house, a tree, and the sun.
-//
-/*
-function WINDOW() {
-    glColor3f(1.0,1.0,1.0)
-    glPushMatrix()
-    glScalef(0.2,0.2,0.2)
-    BOX()
-    glPopMatrix()
-}
-//
-function DOOR() {
-    glColor3f(0.6,0.6,0.8)
-    glPushMatrix()
-    glScalef(0.2,0.2,0.2)
-    RECT()
-    glPopMatrix()
-}
-//
-function HOUSE() {
-    glColor3f(0.5,0.125,0.125)
-
-    BOX()
-
-    glPushMatrix()
-    glTranslatef(0.2,0.2,0.0)
-    WINDOW()
-    glPopMatrix()
-
-    glPushMatrix()
-    glTranslatef(0.2,0.6,0.0)
-    WINDOW()
-    glPopMatrix()
-
-    glPushMatrix()
-    glTranslatef(0.6,0.6,0.0)
-    WINDOW()
-    glPopMatrix()
-
-    glPushMatrix()
-    glTranslatef(0.6,0.0,0.0)
-    DOOR()
-    glPopMatrix()
-
-    glColor3f(0.25,0.25,0.25)
-    glPushMatrix()
-    glTranslatef(0.5,1.5,0.0)
-    glScalef(1.1,0.8,1.1)
-    glRotatef(-135,0.0,0.0,1.0)
-    RTRI()
-    glPopMatrix()
-}
-//
-function TREE() {
-    glColor3f(0.5,0.5,0.25);
-
-    glPushMatrix();
-
-    // Trunk.
-    glTranslatef(-0.5,0.0,0.0);
-    BOX();
-    glTranslatef(0.0,1.0,0.0);
-    BOX();
-    glTranslatef(0.0,1.0,0.0);
-    BOX();
-    glTranslatef(0.0,1.0,0.0);
-    
-    // Branch 1.
-    glPushMatrix()
-    glRotatef(gAngle1,0.0,0.0,1.0);
-    glScalef(0.3,0.6,0.3);
-    RTRI(); 
-    glPopMatrix();
-    
-    // Branch 2.
-    glPushMatrix()
-    glTranslatef(1.0,0.0,0.0);
-    glRotatef(-90.0,0.0,0.0,1.0);
-    glRotatef(gAngle2,0.0,0.0,1.0);
-    glScalef(0.3,0.6,0.3);
-    RTRI();
-    glPopMatrix();
-    
-    glPopMatrix();
-
-    glColor4f(0.1,0.5,0.2,0.7);
-    glPushMatrix()
-    glTranslatef(0.0,3.0,0.01)
-    glScalef(1.75,1.75,1.75)
-    DISK()
-    glPopMatrix()
-}
-//   
-function SUN() {
-    glPushMatrix();
-    glTranslatef(gLocation.x, gLocation.y,-2.0);
-    
-    glPushMatrix();
-    glScalef(0.15,0.15,0.15);
-    glColor3f(1.0,0.8,0.3);
-    DISK()
-    glPopMatrix();
-    
-    glPopMatrix();
-}
-
-//
-// drawHouse
-//
-// Draws a scene depicting a house, a yard, a tree, the sun.
-//
-function drawHouse() {
-    SUN();
-
-    glPushMatrix();
-    
-    glTranslatef(0.0,-1.5,0.0);
-
-    // Draw the yard.
-    glColor3f(0.1,0.3,0.1);
-    glPushMatrix();
-    glTranslatef(5.0,0.0,0.0);
-    glRotatef(180,0.0,0.0,1.0);
-    glScalef(10.0,10.0,10.0);
-    BOX();
-    glPopMatrix();
-
-    // Draw the house.
-    HOUSE();
-
-    // Plant a happy little tree.
-    glPushMatrix();
-    glTranslatef(-1.0,0.0,0.0);
-    glScalef(0.25,0.25,0.25);
-    TREE()
-    glPopMatrix();
-
-    glPopMatrix();
-}
-*/
 
 // Gabe's Code
 // Draw ocean w/ wave
@@ -365,7 +243,7 @@ function drawWave() {
 }
 
 function drawBoat() {
-
+// Come back to work on the periscope
     glColor3f(0.4,0.4,0.4);
     glPushMatrix();
     glTranslatef(-.5,-1,0);
@@ -377,6 +255,20 @@ function drawBoat() {
     DISK();
     glPopMatrix();
     glPopMatrix();
+    // Periscope
+    glPushMatrix();
+    glColor3f(.3,.3,.3);
+    glTranslatef(-.45,0,0);
+    glRotatef(gAngle1,0,0,1);
+    
+    glScalef(.3,0.4,1);
+    
+    
+    BOX();
+    glPopMatrix();
+
+    // Restore
+
 }
 
 // It ain't pretty, but it works
@@ -478,6 +370,7 @@ function makeSquare() {
     glEnd();
 }
 
+
 // drawSquareSierpinski
 //
 // Draws the recursive figure of a Sierpinski square.  The integer
@@ -502,6 +395,31 @@ function drawSquareSierpinski(levels) {
         }
         glPopMatrix();
     }         
+}
+
+function drawSnowflake(levels) {
+    console.log("Hello world")
+    console.log(levels)
+    glPopMatrix();
+    glPushMatrix();
+    
+    if (levels == 0) {
+        glBeginEnd("HEX");
+        glPopMatrix();
+    } else {
+        glPushMatrix();
+        glScalef(1/6,1/6,1/6)
+        for (let i = 0; i <= 6; i++){
+            for (let j = 0; j <=6; j++) {
+                if ((i != 0) || (j != 0)) {
+                    glPushMatrix();
+                    glTranslatef(i,j,0);
+                    drawSnowflake(levels-1);
+                    glPopMatrix();
+                }
+            }
+        }
+    }
 }
 
 
@@ -799,8 +717,14 @@ function drawRoom() {
     glPopMatrix();
 
     glPopMatrix();
+
+
+
 }
 
+function table_items(){
+    
+}
 
 // drawStillLife
 //
@@ -1035,7 +959,8 @@ function draw() {
         glPushMatrix();
         glScalef(3.0,3.0,3.0);
         glColor3f(0.6, 0.4, 0.65);
-        drawSquareSierpinski(gRecursiveLevels);
+        //drawSquareSierpinski(gRecursiveLevels);
+        drawSnowflake(gRecursiveLevels);
         glPopMatrix();
         
     } else if (gScene == "still-life") {
@@ -1339,6 +1264,7 @@ function main() {
     makeCube();
     makeLight();
     makeWall();
+    makeHEX();
 
     ortho(800,640);
 
