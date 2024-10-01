@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>facet intersection tester</title>
+    
+    <script id="glsl/vs-uniform-color.c" type="x-shader/x-vertex">
+//
+// vs-uniform-color.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Simple vertex shader that preprocesses per-vertex information for a
+// fragment shader. It uses the same color information uniformly for
+// all the vertices of the object.
+//
+// It calculates a position using the supplied vertex positions and the two
+// standard WebGL transforation matrices.
+//
+// It sends the color information to the fragment shader.
+//
+attribute vec4 aVertexPosition;
+
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+uniform vec4 uColor;
+
+varying vec4 color;
+
+void main(void) {
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  color = uColor;
+}
+    </script>
+    <script id="glsl/vs-varying-color.c" type="x-shader/x-vertex">
+//
+// vs-varying-color.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Simple vertex shader that preprocesses per-vertex information for a
+// fragment shader. It expects the color information to vary amongst
+// the vertices of the object.
+//
+// It calculates a position using the supplied vertex positions and the two
+// standard WebGL transforation matrices.
+//
+// It sends the (interpolated) color information to the fragment shader.
+//
+attribute vec4 aVertexPosition;
+attribute vec4 aVertexColor;
+
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+
+varying vec4 color;
+
+void main(void) {
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  color = aVertexColor;
+}
+    </script>
+    <script id="glsl/fs-color.c" type="x-shader/x-fragment">
+//
+// fs-color.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Simple fragment shader that gets fed a color from the vertex shader.
+// Nothing else is communicated to it from the WebGL program.
+//
+varying lowp vec4 color;
+
+void main(void) {
+  gl_FragColor = color;
+}
+    </script>
+    <script id="glsl/vs-uniform-material.c" type="x-shader/x-vertex">
+//
+// vs-uniform-material.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Vertex shader that preprocesses per-vertex information to be fed
+// into a Phong fragment shader. It expects the material's color
+// information to be uniform over all the vertices of the object.
+//
+// It sends this (interpolated) information to the fragment shader: 
+// * The position of a fragment of a facet or line object defined by
+//   several vertex positions.
+// * The normal of that surface.
+// * The color of the material.
+//
+// It is fed per-vertex information with attributes for:
+// * vertex position
+// * surface normal at that vertex
+// * material color at that vertex
+//
+attribute vec4 aVertexPosition;   // Corner of some facet of the surface.
+attribute vec4 aVertexNormal;     // Surface normal at that osition.
+
+uniform mat4 uProjectionMatrix;
+uniform mat4 uModelViewMatrix;
+uniform vec4 uMaterialColor;      // Color of material.
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color. 
+
+void main() {
+  
+  // Transform and interpolate vertex information.
+  position   = uModelViewMatrix * aVertexPosition;
+  normal     = uModelViewMatrix * aVertexNormal;
+  material   = uMaterialColor;
+
+  // The output required by GLSL.
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+}
+    </script>
+    <script id="glsl/vs-varying-material.c" type="x-shader/x-vertex">
+//
+// vs-varying-material.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Vertex shader that preprocesses per-vertex information to be fed
+// into a Phong fragment shader. It expects the material's color
+// information to vary amongst the vertices of the object.
+//
+// It sends this (interpolated) information to the fragment shader:
+// * The position of a fragment of a facet or line object defined by
+//   several vertex positions.
+// * The normal of that surface.
+// * The color of the material.
+//
+// It is fed per-vertex information with attributes for:
+// * vertex position
+// * surface normal at that vertex
+// * material color at that vertex
+//
+attribute vec4 aVertexPosition;   // Corner of some facet of the surface.
+attribute vec4 aVertexNormal;     // Surface normal at that position.
+attribute vec4 aVertexMaterial;   // Color of material at that position.
+
+uniform mat4 uProjectionMatrix;
+uniform mat4 uModelViewMatrix;
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color.
+
+void main() {
+  
+  // Transform and interpolate vertex information.
+  position   = uModelViewMatrix * aVertexPosition;
+  normal     = uModelViewMatrix * aVertexNormal;
+  material   = aVertexMaterial;
+ 
+  // The output required by GLSL.
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    
+}
+    </script>
+    <script id="glsl/fs-phong.c" type="x-shader/x-fragment">
+//
+// fs-phong.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Fragment shader that performs a variant of Phong shading.
+//
+// It is fed position, material color, and normal info from the vertex shader.
+// It is also fed the following uniform information from the WebGL program:
+//  * The color of the ambient light.
+//  * Characteristics of a single light source (LIGHT0), namely:
+//    + its color
+//    + its position
+//    + whether (the specular component of) that light is on/off
+//  * The reflectance characteristics of the matrial, namely:
+//    + how much of it is diffuse
+//    + how much of it is specular
+//    + how shiny the surface is ("shininess" as employed by the Phong model)
+// It uses all this info to calculate the fragment color at its surface point.
+//
+
+precision highp float;
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color.
+
+uniform int  uLight0Enabled;  // Is the light on?
+uniform vec4 uLight0Position; // Location of the light.
+uniform vec4 uLight0Color;    // Light color.
+
+uniform vec4 uAmbientColor;    // Ambient light of environment.
+
+uniform float uMaterialDiffuse;   // Portion of reflection that's diffuse.
+uniform float uMaterialSpecular;  // Portion of reflection that's specular.
+uniform float uMaterialShininess; // Specular highlight control.
+
+void main() {
+  
+  vec4 light_color         = uLight0Color;
+  vec4 ambient_light_color = uAmbientColor;
+  
+  float diffuse_amount  = uMaterialDiffuse;
+  float specular_amount = uMaterialSpecular;
+  float shininess       = uMaterialShininess;
+  
+  vec4 light = uLight0Position;
+  vec4 eye   = vec4(0.0,0.0,10.0,1.0);
+  
+  vec4  l = normalize(light - position);
+  vec4  e = normalize(eye - position);
+  vec4  n = normalize(normal);
+  vec4  r = normalize(-l + 2.0 * dot(l,n) * n);
+  float p = pow(max(dot(e,r),0.0),shininess);
+  
+  vec4 ambient  = ambient_light_color * material;
+  vec4 diffuse  = diffuse_amount * light_color * material * max(dot(l,n), 0.0);
+  vec4 specular = specular_amount * light_color * p * max(dot(l,n), 0.0);
+
+  if (dot(l,n) > 0.0) {
+    if (uLight0Enabled == 1) {
+      gl_FragColor = ambient + diffuse + specular;
+    } else {
+      gl_FragColor = ambient + diffuse;
+    }
+  } else {
+      gl_FragColor = ambient;
+  }
+}
+    </script>
+    <script id="cube.obj" type="text/html">
+v -1.0 -1.0 -1.0
+v -1.0 -1.0 1.0
+v -1.0 1.0 -1.0
+v -1.0 1.0 1.0
+v 1.0 -1.0 -1.0
+v 1.0 -1.0 1.0
+v 1.0 1.0 -1.0
+v 1.0 1.0 1.0
+f 1 7 5
+f 1 3 7
+f 1 4 3
+f 1 2 4
+f 3 8 7
+f 3 4 8
+f 5 7 8
+f 5 8 6
+f 1 5 6
+f 1 6 2
+f 2 6 8
+f 2 8 4
+    </script>
+    <script id="soccer.obj" type="text/html">
+v 0.80928 0.333333 0.525731
+v 0.5671 0.666667 0.525731
+v 0.216613 0.666667 0.742344
+v 0.108307 0.333333 0.958957
+v 0.350487 0 0.958957
+v 0.700973 0 0.742344
+v -0.066937 0.872678 0.525731
+v -0.458794 0.745356 0.525731
+v -0.567101 0.412023 0.742344
+v -0.28355 0.206011 0.958957
+v -0.850651 0.206011 0.525731
+v -0.850651 -0.206011 0.525731
+v -0.567101 -0.412023 0.742344
+v -0.28355 -0.206011 0.958957
+v -0.458794 -0.745356 0.525731
+v -0.066937 -0.872678 0.525731
+v 0.216613 -0.666667 0.742344
+v 0.108307 -0.333333 0.958957
+v 0.5671 -0.666667 0.525731
+v 0.80928 -0.333333 0.525731
+v 0.675407 0.745356 -0.175244
+v 0.500164 0.872678 0.175244
+v 0.984524 0.206011 0.175244
+v 0.917587 0.412023 -0.175244
+v -0.500164 0.872678 -0.175244
+v -0.675407 0.745356 0.175244
+v 0.108307 1 0.175244
+v -0.108307 1 -0.175244
+v -0.984524 -0.206011 -0.175244
+v -0.917587 -0.412023 0.175244
+v -0.917587 0.412023 0.175244
+v -0.984524 0.206011 -0.175244
+v -0.108307 -1 -0.175244
+v 0.108307 -1 0.175244
+v -0.675407 -0.745356 0.175244
+v -0.500164 -0.872678 -0.175244
+v 0.917587 -0.412023 -0.175244
+v 0.984524 -0.206011 0.175244
+v 0.500164 -0.872678 0.175244
+v 0.675407 -0.745356 -0.175244
+v 0.458794 0.745356 -0.525731
+v 0.066937 0.872678 -0.525731
+v -0.5671 0.666667 -0.525731
+v -0.80928 0.333333 -0.525731
+v -0.80928 -0.333333 -0.525731
+v -0.5671 -0.666667 -0.525731
+v 0.066937 -0.872678 -0.525731
+v 0.458794 -0.745356 -0.525731
+v 0.850651 -0.206011 -0.525731
+v 0.850651 0.206011 -0.525731
+v -0.108307 0.333333 -0.958957
+v -0.216613 0.666667 -0.742344
+v 0.567101 0.412023 -0.742344
+v 0.28355 0.206011 -0.958957
+v -0.350487 0 -0.958957
+v -0.700973 0 -0.742344
+v -0.108307 -0.333333 -0.958957
+v -0.216613 -0.666667 -0.742344
+v 0.28355 -0.206011 -0.958957
+v 0.567101 -0.412023 -0.742344
+f 1 5 6
+f 1 4 5
+f 1 3 4
+f 1 2 3
+f 7 4 3
+f 7 10 4
+f 7 9 10
+f 7 8 9
+f 11 10 9
+f 11 14 10
+f 11 13 14
+f 11 12 13
+f 15 14 13
+f 15 18 14
+f 15 17 18
+f 15 16 17
+f 19 18 17
+f 19 5 18
+f 19 6 5
+f 19 20 6
+f 21 23 24
+f 21 1 23
+f 21 2 1
+f 21 22 2
+f 25 27 28
+f 25 7 27
+f 25 8 7
+f 25 26 8
+f 29 31 32
+f 29 11 31
+f 29 12 11
+f 29 30 12
+f 33 35 36
+f 33 15 35
+f 33 16 15
+f 33 34 16
+f 37 39 40
+f 37 19 39
+f 37 20 19
+f 37 38 20
+f 28 41 42
+f 28 21 41
+f 28 22 21
+f 28 27 22
+f 32 43 44
+f 32 25 43
+f 32 26 25
+f 32 31 26
+f 36 45 46
+f 36 29 45
+f 36 30 29
+f 36 35 30
+f 40 47 48
+f 40 33 47
+f 40 34 33
+f 40 39 34
+f 24 49 50
+f 24 37 49
+f 24 38 37
+f 24 23 38
+f 51 53 54
+f 51 41 53
+f 51 42 41
+f 51 52 42
+f 55 52 51
+f 55 43 52
+f 55 44 43
+f 55 56 44
+f 57 56 55
+f 57 45 56
+f 57 46 45
+f 57 58 46
+f 59 58 57
+f 59 47 58
+f 59 48 47
+f 59 60 48
+f 54 60 59
+f 54 49 60
+f 54 50 49
+f 54 53 50
+f 4 18 5
+f 4 14 18
+f 4 10 14
+f 2 7 3
+f 2 27 7
+f 2 22 27
+f 1 38 23
+f 1 20 38
+f 1 6 20
+f 8 11 9
+f 8 31 11
+f 8 26 31
+f 12 15 13
+f 12 35 15
+f 12 30 35
+f 16 19 17
+f 16 39 19
+f 16 34 39
+f 21 53 41
+f 21 50 53
+f 21 24 50
+f 25 52 43
+f 25 42 52
+f 25 28 42
+f 29 56 45
+f 29 44 56
+f 29 32 44
+f 33 58 47
+f 33 46 58
+f 33 36 46
+f 37 60 49
+f 37 48 60
+f 37 40 48
+f 51 57 55
+f 51 59 57
+f 51 54 59
+    </script>
+    <script id="fox.obj" type="text/html">
+v 42.693699 55.073746 83.118004
+v 45.793697 58.129745 75.270004
+v 46.152699 49.387741 76.674004
+v 49.790699 80.143745 9.5390005
+v 50.732697 85.597748 14.79
+v 51.652699 77.702744 5.3340001
+v 52.007698 95.374741 10.497
+v 52.307312 78.487328 2.24
+v 52.883614 83.75238 2.24
+v 53.043701 89.253746 4.6450005
+v 53.886536 76.841812 2.24
+v 53.889698 52.106743 87.291
+v 54.346565 92.007729 2.24
+v 54.418701 82.984741 16.896002
+v 55.0467 70.461746 12.451
+v 55.257698 94.443741 15.199
+v 55.524696 71.440742 18.123001
+v 55.836395 98.569855 2.24
+v 55.944698 61.518745 85.808998
+v 56.2117 55.303741 3.7420001
+v 56.258698 104.48074 11.927
+v 56.349701 62.930744 91.595001
+v 56.391701 61.881744 73.815002
+v 56.491699 105.76875 5.7150002
+v 56.751701 101.66574 7.3340006
+v 56.804699 71.288742 7.54
+v 57.07542 56.789154 2.24
+v 57.252701 48.37574 93.450005
+v 57.529716 53.451321 2.24
+v 57.635696 47.079742 84.879005
+v 58.085701 86.595741 25.219002
+v 58.342697 67.039742 77.390999
+v 58.881084 58.7136 2.24
+v 58.954224 59.686714 2.24
+v 59.141701 51.210743 71.788002
+v 59.460701 63.373741 44.727005
+v 59.739552 51.478203 2.24
+v 59.9137 88.599747 18.992001
+v 60.148697 76.219742 18.811001
+v 60.3237 60.447742 31.734001
+v 60.884697 43.305744 77.349998
+v 60.912827 105.79702 2.24
+v 61.1437 55.749741 44.763004
+v 61.453697 52.316742 7.507
+v 61.960701 66.095741 21.981001
+v 62.0467 61.275742 97.021004
+v 62.292698 70.386742 29.543001
+v 62.356697 53.216743 55.205006
+v 62.418701 105.17474 17.396002
+v 62.484756 106.64238 2.24
+v 62.7397 48.572742 67.131004
+v 62.7397 64.000748 64.43
+v 63.145428 67.240562 2.24
+v 63.584698 60.361744 20.252001
+v 63.7267 60.684742 10.731
+v 63.925034 106.81559 2.24
+v 63.929699 112.45274 9.6850004
+v 63.9557 66.572746 10.345
+v 64.1147 68.993744 34.773003
+v 64.200699 71.568741 80.745003
+v 64.2817 73.435745 35.395004
+v 64.3927 48.554741 49.454002
+v 64.442703 97.251747 17.991001
+v 64.748703 77.858742 37.022003
+v 64.866699 56.381744 24.264
+v 64.996696 96.767746 27.875002
+v 65.145828 65.934769 2.24
+v 65.643105 107.92192 2.24
+v 65.695702 83.843742 30.958
+v 65.733696 71.709747 53.433002
+v 66.3377 75.331741 25.253
+v 66.4067 73.481743 43.332005
+v 66.540695 91.297745 32.159
+v 66.664696 56.731743 9.592
+v 66.669403 48.838554 2.24
+v 66.702911 48.72588 2.24
+v 66.784592 48.906273 2.24
+v 66.801697 48.693741 2.2639999
+v 66.902916 49.381035 2.24
+v 66.939476 49.250767 2.24
+v 66.992638 49.062054 2.24
+v 67.230797 48.216553 2.24
+v 67.394699 37.103741 81.132004
+v 67.515701 63.111744 100.677
+v 67.539696 69.756744 67.482002
+v 67.944702 99.459747 31.560001
+v 68.077698 76.252747 51.989002
+v 68.152702 71.632744 88.724998
+v 68.696701 67.965744 96.742004
+v 68.803696 48.098743 97.149002
+v 68.887695 86.565742 46.033005
+v 69.646698 72.77774 78.164001
+v 69.885696 95.808746 36.319004
+v 69.968697 42.174744 90.845001
+v 69.977699 41.356743 98.225006
+v 70.1427 103.38074 24.352001
+v 70.733696 67.436745 108.855
+v 70.968697 51.06974 98.622002
+v 71.111702 72.426743 107.482
+v 71.153702 51.289742 39.114002
+v 71.189697 44.325741 47.580006
+v 71.438698 40.588741 107.704
+v 71.538696 60.711742 100.677
+v 71.717697 37.941742 85.403
+v 71.762665 43.373569 2.24
+v 72.005699 98.046745 35.140003
+v 72.122696 36.288742 105.652
+v 72.494698 70.647743 95.436005
+v 72.513702 102.73474 15.024
+v 72.633698 73.949745 92.492004
+v 72.7967 58.378742 17.734001
+v 73.502701 40.078743 95.022003
+v 73.579697 45.823742 7.8980007
+v 73.786697 79.465744 57.388004
+v 73.886696 36.661743 90.386002
+v 73.899696 57.622742 8.835
+v 74.178696 39.876743 73.445
+v 74.7547 72.616745 99.426003
+v 74.998703 75.769745 63.069004
+v 75.1017 113.86774 5.2519999
+v 75.318703 56.577744 30.290001
+v 75.449699 52.095741 10.817
+v 75.604088 112.13185 2.24
+v 75.696701 36.478741 95.190002
+v 76.702698 114.64375 10.55
+v 76.944702 71.965744 89.016998
+v 76.979698 96.929749 47.728004
+v 77.9077 51.154743 36.388004
+v 78.002274 44.574005 2.24
+v 79.096703 73.304741 69.420998
+v 79.1987 42.213741 99.639
+v 79.374413 45.233475 2.24
+v 79.469696 66.946747 97.004005
+v 79.747696 107.16275 28.629002
+v 79.764702 58.894745 97.582001
+v 80.063698 78.363747 61.821003
+v 80.127197 111.12736 2.24
+v 80.599701 50.424744 9.9549999
+v 80.756699 45.11174 62.086006
+v 81.919342 58.06493 2.24
+v 82.265701 109.80675 13.958
+v 84.025574 59.844101 2.24
+v 84.467697 45.786743 68.826004
+v 84.471703 43.587742 75.089005
+v 84.596703 44.899742 47.078003
+v 84.925697 49.076744 35.194004
+v 85.5467 91.266747 55.622005
+v 85.9207 111.45375 5.2309999
+v 86.514702 59.137741 5.5609999
+v 86.762238 109.14325 2.24
+v 86.766701 47.721741 82.278
+v 86.856697 72.635742 62.383003
+v 86.896698 104.87675 37.165005
+v 87.243698 54.345741 18.197001
+v 87.871704 55.595741 89.347
+v 88.714699 64.795746 79.952003
+v 88.973701 62.803741 23.198
+v 89.075699 101.63574 42.994003
+v 89.996605 105.81035 2.24
+v 90.035698 52.998741 40.853004
+v 90.183701 64.80574 63.565006
+v 91.397232 60.008644 2.24
+v 91.465698 64.880745 10.255
+v 91.6437 58.80574 66.964005
+v 92.933701 107.56374 24.587
+v 93.065704 63.290745 57.241005
+v 93.917702 69.415741 53.485004
+v 94.403702 62.207745 48.174004
+v 94.826447 60.531517 2.24
+v 95.247696 60.479744 5.2870002
+v 95.642334 64.189445 2.24
+v 95.830704 101.93674 6.6710005
+v 96.940025 95.538666 2.24
+v 97.455704 70.102745 5.7210002
+v 97.804939 93.313637 2.24
+v 98.519974 75.185066 2.24
+v 98.574799 92.960152 2.24
+v 98.634705 62.251743 20.967001
+v 98.750671 90.556168 2.24
+v 99.122696 89.371742 47.483006
+v 99.9897 70.128746 31.274002
+v 100.1417 73.043747 44.209003
+v 100.3027 96.549744 14.319
+v 100.37328 78.445824 2.24
+v 101.2807 98.736748 27.475
+v 103.9297 92.004745 32.381001
+v 105.3817 70.705742 21.513
+v 105.6107 93.889748 13.705
+v 105.7507 78.772743 12.146
+v 106.4267 78.198746 24.339001
+s 1
+f 52// 70// 36//
+f 52// 48// 51//
+f 36// 48// 52//
+f 43// 48// 36//
+f 110// 88// 108//
+f 108// 88// 89//
+f 93// 73// 91//
+f 186// 180// 182//
+f 10// 4// 7//
+f 66// 38// 31//
+f 61// 70// 72//
+f 32// 60// 85//
+f 47// 59// 71//
+f 45// 40// 47//
+f 5// 7// 4//
+f 12// 28// 46//
+f 2// 1// 32//
+f 183// 185// 186//
+f 19// 60// 32//
+f 133// 155// 156//
+f 167// 182// 180//
+f 21// 7// 5//
+f 130// 85// 92//
+f 12// 46// 22//
+f 136// 152// 147//
+f 147// 167// 180//
+f 24// 21// 57//
+f 73// 93// 86//
+f 186// 190// 188//
+f 185// 180// 186//
+f 152// 167// 147//
+f 133// 99// 97//
+f 133// 103// 135//
+f 110// 133// 126//
+f 126// 88// 110//
+f 158// 127// 147//
+f 133// 118// 99//
+f 32// 1// 19//
+f 85// 130// 119//
+f 127// 93// 91//
+f 24// 25// 21//
+f 64// 61// 72//
+f 89// 118// 108//
+f 118// 133// 110//
+f 17// 4// 15//
+f 96// 93// 127//
+f 87// 85// 114//
+f 70// 85// 87//
+f 166// 167// 161//
+f 52// 35// 23//
+f 126// 92// 88//
+f 172// 148// 165//
+f 183// 186// 188//
+f 39// 47// 71//
+f 39// 38// 14//
+f 71// 31// 39//
+f 38// 63// 14//
+f 6// 4// 10//
+f 71// 64// 69//
+f 185// 172// 165//
+f 190// 189// 188//
+f 96// 106// 93//
+f 31// 73// 66//
+f 17// 39// 14//
+f 47// 40// 36//
+f 40// 43// 36//
+f 136// 130// 152//
+f 99// 118// 89//
+f 49// 21// 16//
+f 14// 49// 16//
+f 22// 46// 88//
+f 1// 12// 19//
+f 12// 22// 19//
+f 114// 136// 147//
+f 127// 91// 114//
+f 85// 70// 52//
+f 87// 114// 91//
+f 156// 130// 126//
+f 156// 164// 161//
+f 161// 152// 156//
+f 72// 87// 64//
+f 60// 92// 85//
+f 52// 32// 85//
+f 3// 1// 2//
+f 136// 119// 130//
+f 2// 23// 35//
+f 135// 155// 133//
+f 165// 158// 185//
+f 73// 31// 69//
+f 91// 64// 87//
+f 126// 130// 92//
+f 64// 73// 69//
+f 96// 109// 63//
+f 66// 63// 38//
+f 5// 14// 16//
+f 39// 31// 38//
+f 161// 167// 152//
+f 36// 70// 61//
+f 61// 64// 71//
+f 61// 71// 59//
+f 47// 36// 59//
+f 22// 88// 60//
+f 92// 60// 88//
+f 85// 119// 114//
+f 52// 23// 32//
+f 69// 31// 71//
+f 72// 70// 87//
+f 152// 130// 156//
+f 114// 147// 127//
+f 84// 99// 89//
+f 136// 114// 119//
+f 23// 2// 32//
+f 51// 35// 52//
+f 158// 147// 180//
+f 97// 103// 133//
+f 133// 156// 126//
+f 19// 22// 60//
+f 165// 153// 158//
+f 86// 106// 96//
+f 25// 10// 7//
+f 24// 10// 25//
+f 46// 89// 88//
+f 5// 4// 17//
+f 62// 48// 43//
+f 185// 183// 172//
+f 134// 96// 127//
+f 64// 91// 73//
+f 106// 86// 93//
+f 96// 63// 66//
+f 96// 66// 86//
+f 14// 63// 49//
+f 15// 47// 17//
+f 16// 21// 5//
+f 66// 73// 86//
+f 25// 7// 21//
+f 185// 158// 180//
+f 17// 14// 5//
+f 84// 97// 99//
+f 61// 59// 36//
+f 46// 84// 89//
+f 17// 47// 39//
+f 125// 49// 63//
+f 125// 63// 109//
+f 163// 170// 174//
+f 113// 116// 74//
+f 58// 45// 15//
+f 55// 54// 58//
+f 107// 124// 131//
+f 144// 124// 115//
+f 94// 83// 104//
+f 51// 83// 41//
+f 78// 74// 44//
+f 141// 134// 165//
+f 151// 144// 143//
+f 65// 111// 121//
+f 128// 122// 138//
+f 95// 94// 112//
+f 58// 54// 45//
+f 55// 44// 74//
+f 57// 21// 49//
+f 190// 186// 182//
+f 74// 111// 65//
+f 55// 74// 54//
+f 45// 47// 15//
+f 181// 157// 178//
+f 26// 58// 15//
+f 138// 154// 146//
+f 116// 111// 74//
+f 3// 2// 35//
+f 149// 157// 154//
+f 187// 178// 174//
+f 26// 15// 4//
+f 74// 78// 113//
+f 122// 113// 138//
+f 113// 122// 116//
+f 139// 117// 101//
+f 51// 117// 83//
+f 3// 41// 30//
+f 168// 164// 145//
+f 151// 164// 155//
+f 182// 168// 181//
+f 30// 28// 12//
+f 146// 154// 160//
+f 154// 138// 149//
+f 49// 125// 57//
+f 146// 160// 145//
+f 163// 149// 170//
+f 157// 149// 163//
+f 189// 187// 174//
+f 44// 55// 20//
+f 153// 134// 127//
+f 48// 62// 101//
+f 98// 102// 131//
+f 83// 94// 28//
+f 168// 157// 181//
+f 112// 94// 115//
+f 125// 148// 120//
+f 139// 143// 117//
+f 117// 51// 101//
+f 181// 178// 187//
+f 124// 107// 112//
+f 155// 131// 124//
+f 144// 104// 117//
+f 157// 168// 160//
+f 189// 190// 187//
+f 100// 43// 121//
+f 65// 40// 54//
+f 122// 111// 116//
+f 165// 148// 141//
+f 108// 118// 110//
+f 155// 164// 156//
+f 28// 98// 46//
+f 135// 98// 131//
+f 98// 28// 90//
+f 135// 131// 155//
+f 135// 103// 98//
+f 83// 28// 30//
+f 30// 12// 3//
+f 190// 181// 187//
+f 107// 131// 102//
+f 90// 95// 107//
+f 90// 107// 102//
+f 94// 104// 115//
+f 124// 112// 115//
+f 124// 144// 151//
+f 115// 104// 144//
+f 95// 90// 94//
+f 90// 28// 94//
+f 83// 30// 41//
+f 117// 143// 144//
+f 117// 104// 83//
+f 101// 62// 100//
+f 146// 128// 138//
+f 141// 148// 125//
+f 151// 155// 124//
+f 46// 98// 84//
+f 3// 35// 41//
+f 3// 12// 1//
+f 143// 164// 151//
+f 145// 164// 139//
+f 161// 164// 166//
+f 164// 168// 166//
+f 168// 167// 166//
+f 101// 51// 48//
+f 4// 6// 26//
+f 160// 154// 157//
+f 96// 134// 109//
+f 121// 122// 128//
+f 84// 103// 97//
+f 178// 157// 163//
+f 54// 40// 45//
+f 121// 43// 65//
+f 43// 40// 65//
+f 107// 95// 112//
+f 98// 103// 84//
+f 143// 139// 164//
+f 43// 100// 62//
+f 145// 139// 101//
+f 128// 145// 101//
+f 182// 181// 190//
+f 174// 178// 163//
+f 134// 141// 109//
+f 168// 145// 160//
+f 100// 121// 128//
+f 145// 128// 146//
+f 100// 128// 101//
+f 121// 111// 122//
+f 74// 65// 54//
+f 109// 141// 125//
+f 35// 51// 41//
+f 127// 158// 153//
+f 153// 165// 134//
+f 167// 168// 182//
+f 90// 102// 98//
+f 11// 8// 9//
+f 27// 33// 29//
+f 75// 67// 68//
+f 75// 37// 67//
+f 76// 37// 75//
+f 175// 171// 173//
+f 176// 171// 175//
+f 129// 105// 123//
+f 179// 176// 177//
+f 184// 176// 179//
+f 18// 11// 13//
+f 42// 11// 18//
+f 50// 11// 42//
+f 53// 11// 50//
+f 37// 33// 34//
+f 37// 29// 33//
+f 140// 132// 137//
+f 67// 53// 56//
+f 159// 142// 150//
+f 162// 142// 159//
+f 34// 67// 37//
+f 175// 177// 176//
+f 9// 13// 11//
+f 56// 68// 67//
+f 68// 77// 75//
+f 68// 79// 77//
+f 68// 80// 79//
+f 68// 81// 80//
+f 68// 82// 81//
+f 68// 105// 82//
+f 68// 123// 105//
+f 159// 169// 162//
+f 159// 171// 169//
+f 159// 173// 171//
+f 123// 132// 129//
+f 123// 137// 132//
+f 137// 142// 140//
+f 137// 150// 142//
+f 50// 56// 53//
+f 159// 150// 148//
+f 159// 148// 172//
+f 175// 173// 172//
+f 175// 172// 183//
+f 177// 175// 183//
+f 177// 183// 188//
+f 9// 8// 6//
+f 9// 6// 10//
+f 50// 42// 24//
+f 50// 24// 57//
+f 123// 68// 120//
+f 18// 13// 10//
+f 18// 10// 24//
+f 179// 177// 188//
+f 179// 188// 189//
+f 184// 179// 189//
+f 173// 159// 172//
+f 13// 9// 10//
+f 53// 67// 58//
+f 53// 58// 26//
+f 82// 105// 113//
+f 82// 113// 78//
+f 29// 37// 44//
+f 29// 44// 20//
+f 105// 129// 113//
+f 142// 162// 149//
+f 8// 11// 26//
+f 8// 26// 6//
+f 67// 34// 58//
+f 171// 176// 174//
+f 34// 33// 55//
+f 34// 55// 58//
+f 132// 140// 138//
+f 33// 27// 20//
+f 33// 20// 55//
+f 37// 76// 78//
+f 37// 78// 44//
+f 137// 123// 120//
+f 137// 120// 148//
+f 68// 56// 125//
+f 68// 125// 120//
+f 169// 171// 174//
+f 169// 174// 170//
+f 56// 50// 57//
+f 56// 57// 125//
+f 176// 184// 189//
+f 176// 189// 174//
+f 140// 142// 149//
+f 140// 149// 138//
+f 11// 53// 26//
+f 27// 29// 20//
+f 129// 132// 138//
+f 129// 138// 113//
+f 162// 169// 170//
+f 162// 170// 149//
+f 76// 75// 78//
+f 79// 80// 78//
+f 75// 77// 78//
+f 77// 79// 78//
+f 42// 18// 24//
+f 150// 137// 148//
+f 81// 82// 78//
+f 80// 81// 78//
+</script>    
+    <script>
+      var editorLibrary = [["cube",false],["soccer",false],["fox",false]];
+    </script>
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.4.0/jspdf.min.js"></script>
+    
+    <script src="gl-matrix-min.js" defer></script>
+    <script src="gl.js" defer></script>
+    <script src="load-shaders.js" defer></script>
+    <script src="legacy-opengl.js" defer></script>
+    <script src="geometry-3d.js" defer></script>
+    <script src="geometry-2d.js" defer></script>
+    <script src="cg-object.js" defer></script>
+    <script src="walk-thru-library.js" defer></script>
+    <script src="quat.js" defer></script>
+    <script src="facet-hit.js" defer></script>
+  </head>
+
+  <body>
+    <canvas id="glcanvas" width="600" height="600"></canvas><br>
+    <font face="monospace">
+    Click and drag to select and move control points.<br>
+    SHIFT-click or MIDDLE-click and drag to reorient the view.
+    </font>
+  </body>
+</html>

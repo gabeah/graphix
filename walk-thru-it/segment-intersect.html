@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>segment intersection tester </title>
+    
+    <script id="glsl/vs-uniform-color.c" type="x-shader/x-vertex">
+//
+// vs-uniform-color.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Simple vertex shader that preprocesses per-vertex information for a
+// fragment shader. It uses the same color information uniformly for
+// all the vertices of the object.
+//
+// It calculates a position using the supplied vertex positions and the two
+// standard WebGL transforation matrices.
+//
+// It sends the color information to the fragment shader.
+//
+attribute vec4 aVertexPosition;
+
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+uniform vec4 uColor;
+
+varying vec4 color;
+
+void main(void) {
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  color = uColor;
+}
+    </script>
+    <script id="glsl/vs-varying-color.c" type="x-shader/x-vertex">
+//
+// vs-varying-color.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Simple vertex shader that preprocesses per-vertex information for a
+// fragment shader. It expects the color information to vary amongst
+// the vertices of the object.
+//
+// It calculates a position using the supplied vertex positions and the two
+// standard WebGL transforation matrices.
+//
+// It sends the (interpolated) color information to the fragment shader.
+//
+attribute vec4 aVertexPosition;
+attribute vec4 aVertexColor;
+
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+
+varying vec4 color;
+
+void main(void) {
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  color = aVertexColor;
+}
+    </script>
+    <script id="glsl/fs-color.c" type="x-shader/x-fragment">
+//
+// fs-color.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Simple fragment shader that gets fed a color from the vertex shader.
+// Nothing else is communicated to it from the WebGL program.
+//
+varying lowp vec4 color;
+
+void main(void) {
+  gl_FragColor = color;
+}
+    </script>
+    <script id="glsl/vs-uniform-material.c" type="x-shader/x-vertex">
+//
+// vs-uniform-material.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Vertex shader that preprocesses per-vertex information to be fed
+// into a Phong fragment shader. It expects the material's color
+// information to be uniform over all the vertices of the object.
+//
+// It sends this (interpolated) information to the fragment shader: 
+// * The position of a fragment of a facet or line object defined by
+//   several vertex positions.
+// * The normal of that surface.
+// * The color of the material.
+//
+// It is fed per-vertex information with attributes for:
+// * vertex position
+// * surface normal at that vertex
+// * material color at that vertex
+//
+attribute vec4 aVertexPosition;   // Corner of some facet of the surface.
+attribute vec4 aVertexNormal;     // Surface normal at that osition.
+
+uniform mat4 uProjectionMatrix;
+uniform mat4 uModelViewMatrix;
+uniform vec4 uMaterialColor;      // Color of material.
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color. 
+
+void main() {
+  
+  // Transform and interpolate vertex information.
+  position   = uModelViewMatrix * aVertexPosition;
+  normal     = uModelViewMatrix * aVertexNormal;
+  material   = uMaterialColor;
+
+  // The output required by GLSL.
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+}
+    </script>
+    <script id="glsl/vs-varying-material.c" type="x-shader/x-vertex">
+//
+// vs-varying-material.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Vertex shader that preprocesses per-vertex information to be fed
+// into a Phong fragment shader. It expects the material's color
+// information to vary amongst the vertices of the object.
+//
+// It sends this (interpolated) information to the fragment shader:
+// * The position of a fragment of a facet or line object defined by
+//   several vertex positions.
+// * The normal of that surface.
+// * The color of the material.
+//
+// It is fed per-vertex information with attributes for:
+// * vertex position
+// * surface normal at that vertex
+// * material color at that vertex
+//
+attribute vec4 aVertexPosition;   // Corner of some facet of the surface.
+attribute vec4 aVertexNormal;     // Surface normal at that position.
+attribute vec4 aVertexMaterial;   // Color of material at that position.
+
+uniform mat4 uProjectionMatrix;
+uniform mat4 uModelViewMatrix;
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color.
+
+void main() {
+  
+  // Transform and interpolate vertex information.
+  position   = uModelViewMatrix * aVertexPosition;
+  normal     = uModelViewMatrix * aVertexNormal;
+  material   = aVertexMaterial;
+ 
+  // The output required by GLSL.
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    
+}
+    </script>
+    <script id="glsl/fs-phong.c" type="x-shader/x-fragment">
+//
+// fs-phong.c
+//
+// Reed College CSCI 385 Computer Graphics Fall 2024
+//
+// Fragment shader that performs a variant of Phong shading.
+//
+// It is fed position, material color, and normal info from the vertex shader.
+// It is also fed the following uniform information from the WebGL program:
+//  * The color of the ambient light.
+//  * Characteristics of a single light source (LIGHT0), namely:
+//    + its color
+//    + its position
+//    + whether (the specular component of) that light is on/off
+//  * The reflectance characteristics of the matrial, namely:
+//    + how much of it is diffuse
+//    + how much of it is specular
+//    + how shiny the surface is ("shininess" as employed by the Phong model)
+// It uses all this info to calculate the fragment color at its surface point.
+//
+
+precision highp float;
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color.
+
+uniform int  uLight0Enabled;  // Is the light on?
+uniform vec4 uLight0Position; // Location of the light.
+uniform vec4 uLight0Color;    // Light color.
+
+uniform vec4 uAmbientColor;    // Ambient light of environment.
+
+uniform float uMaterialDiffuse;   // Portion of reflection that's diffuse.
+uniform float uMaterialSpecular;  // Portion of reflection that's specular.
+uniform float uMaterialShininess; // Specular highlight control.
+
+void main() {
+  
+  vec4 light_color         = uLight0Color;
+  vec4 ambient_light_color = uAmbientColor;
+  
+  float diffuse_amount  = uMaterialDiffuse;
+  float specular_amount = uMaterialSpecular;
+  float shininess       = uMaterialShininess;
+  
+  vec4 light = uLight0Position;
+  vec4 eye   = vec4(0.0,0.0,10.0,1.0);
+  
+  vec4  l = normalize(light - position);
+  vec4  e = normalize(eye - position);
+  vec4  n = normalize(normal);
+  vec4  r = normalize(-l + 2.0 * dot(l,n) * n);
+  float p = pow(max(dot(e,r),0.0),shininess);
+  
+  vec4 ambient  = ambient_light_color * material;
+  vec4 diffuse  = diffuse_amount * light_color * material * max(dot(l,n), 0.0);
+  vec4 specular = specular_amount * light_color * p * max(dot(l,n), 0.0);
+
+  if (dot(l,n) > 0.0) {
+    if (uLight0Enabled == 1) {
+      gl_FragColor = ambient + diffuse + specular;
+    } else {
+      gl_FragColor = ambient + diffuse;
+    }
+  } else {
+      gl_FragColor = ambient;
+  }
+}
+    </script>
+    <script id="cube.obj" type="text/html">
+v -1.0 -1.0 -1.0
+v -1.0 -1.0 1.0
+v -1.0 1.0 -1.0
+v -1.0 1.0 1.0
+v 1.0 -1.0 -1.0
+v 1.0 -1.0 1.0
+v 1.0 1.0 -1.0
+v 1.0 1.0 1.0
+f 1 7 5
+f 1 3 7
+f 1 4 3
+f 1 2 4
+f 3 8 7
+f 3 4 8
+f 5 7 8
+f 5 8 6
+f 1 5 6
+f 1 6 2
+f 2 6 8
+f 2 8 4
+    </script>
+    <script id="soccer.obj" type="text/html">
+v 0.80928 0.333333 0.525731
+v 0.5671 0.666667 0.525731
+v 0.216613 0.666667 0.742344
+v 0.108307 0.333333 0.958957
+v 0.350487 0 0.958957
+v 0.700973 0 0.742344
+v -0.066937 0.872678 0.525731
+v -0.458794 0.745356 0.525731
+v -0.567101 0.412023 0.742344
+v -0.28355 0.206011 0.958957
+v -0.850651 0.206011 0.525731
+v -0.850651 -0.206011 0.525731
+v -0.567101 -0.412023 0.742344
+v -0.28355 -0.206011 0.958957
+v -0.458794 -0.745356 0.525731
+v -0.066937 -0.872678 0.525731
+v 0.216613 -0.666667 0.742344
+v 0.108307 -0.333333 0.958957
+v 0.5671 -0.666667 0.525731
+v 0.80928 -0.333333 0.525731
+v 0.675407 0.745356 -0.175244
+v 0.500164 0.872678 0.175244
+v 0.984524 0.206011 0.175244
+v 0.917587 0.412023 -0.175244
+v -0.500164 0.872678 -0.175244
+v -0.675407 0.745356 0.175244
+v 0.108307 1 0.175244
+v -0.108307 1 -0.175244
+v -0.984524 -0.206011 -0.175244
+v -0.917587 -0.412023 0.175244
+v -0.917587 0.412023 0.175244
+v -0.984524 0.206011 -0.175244
+v -0.108307 -1 -0.175244
+v 0.108307 -1 0.175244
+v -0.675407 -0.745356 0.175244
+v -0.500164 -0.872678 -0.175244
+v 0.917587 -0.412023 -0.175244
+v 0.984524 -0.206011 0.175244
+v 0.500164 -0.872678 0.175244
+v 0.675407 -0.745356 -0.175244
+v 0.458794 0.745356 -0.525731
+v 0.066937 0.872678 -0.525731
+v -0.5671 0.666667 -0.525731
+v -0.80928 0.333333 -0.525731
+v -0.80928 -0.333333 -0.525731
+v -0.5671 -0.666667 -0.525731
+v 0.066937 -0.872678 -0.525731
+v 0.458794 -0.745356 -0.525731
+v 0.850651 -0.206011 -0.525731
+v 0.850651 0.206011 -0.525731
+v -0.108307 0.333333 -0.958957
+v -0.216613 0.666667 -0.742344
+v 0.567101 0.412023 -0.742344
+v 0.28355 0.206011 -0.958957
+v -0.350487 0 -0.958957
+v -0.700973 0 -0.742344
+v -0.108307 -0.333333 -0.958957
+v -0.216613 -0.666667 -0.742344
+v 0.28355 -0.206011 -0.958957
+v 0.567101 -0.412023 -0.742344
+f 1 5 6
+f 1 4 5
+f 1 3 4
+f 1 2 3
+f 7 4 3
+f 7 10 4
+f 7 9 10
+f 7 8 9
+f 11 10 9
+f 11 14 10
+f 11 13 14
+f 11 12 13
+f 15 14 13
+f 15 18 14
+f 15 17 18
+f 15 16 17
+f 19 18 17
+f 19 5 18
+f 19 6 5
+f 19 20 6
+f 21 23 24
+f 21 1 23
+f 21 2 1
+f 21 22 2
+f 25 27 28
+f 25 7 27
+f 25 8 7
+f 25 26 8
+f 29 31 32
+f 29 11 31
+f 29 12 11
+f 29 30 12
+f 33 35 36
+f 33 15 35
+f 33 16 15
+f 33 34 16
+f 37 39 40
+f 37 19 39
+f 37 20 19
+f 37 38 20
+f 28 41 42
+f 28 21 41
+f 28 22 21
+f 28 27 22
+f 32 43 44
+f 32 25 43
+f 32 26 25
+f 32 31 26
+f 36 45 46
+f 36 29 45
+f 36 30 29
+f 36 35 30
+f 40 47 48
+f 40 33 47
+f 40 34 33
+f 40 39 34
+f 24 49 50
+f 24 37 49
+f 24 38 37
+f 24 23 38
+f 51 53 54
+f 51 41 53
+f 51 42 41
+f 51 52 42
+f 55 52 51
+f 55 43 52
+f 55 44 43
+f 55 56 44
+f 57 56 55
+f 57 45 56
+f 57 46 45
+f 57 58 46
+f 59 58 57
+f 59 47 58
+f 59 48 47
+f 59 60 48
+f 54 60 59
+f 54 49 60
+f 54 50 49
+f 54 53 50
+f 4 18 5
+f 4 14 18
+f 4 10 14
+f 2 7 3
+f 2 27 7
+f 2 22 27
+f 1 38 23
+f 1 20 38
+f 1 6 20
+f 8 11 9
+f 8 31 11
+f 8 26 31
+f 12 15 13
+f 12 35 15
+f 12 30 35
+f 16 19 17
+f 16 39 19
+f 16 34 39
+f 21 53 41
+f 21 50 53
+f 21 24 50
+f 25 52 43
+f 25 42 52
+f 25 28 42
+f 29 56 45
+f 29 44 56
+f 29 32 44
+f 33 58 47
+f 33 46 58
+f 33 36 46
+f 37 60 49
+f 37 48 60
+f 37 40 48
+f 51 57 55
+f 51 59 57
+f 51 54 59
+    </script>
+    <script>
+      var editorLibrary = [["cube",false],["soccer",false]];
+    </script>
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.4.0/jspdf.min.js"></script>
+    
+    <script src="gl-matrix-min.js" defer></script>
+    <script src="gl.js" defer></script>
+    <script src="load-shaders.js" defer></script>
+    <script src="legacy-opengl.js" defer></script>
+    <script src="geometry-3d.js" defer></script>
+    <script src="geometry-2d.js" defer></script>
+    <script src="cg-object.js" defer></script>
+    <script src="walk-thru-library.js" defer></script>
+    <script src="segment-intersect.js" defer></script>
+  </head>
+
+  <body>
+    <canvas id="glcanvas" width="600" height="600"></canvas><br>
+    <font face="monospace">
+    Click and drag to select and move control points.<br>
+    </font>
+  </body>
+</html>
