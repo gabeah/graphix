@@ -722,8 +722,277 @@ function drawRoom() {
 
 }
 
-function table_items(){
+function makeIcosahedron(){
+
+    // draw an icosahedron
+    glBegin(GL_TRIANGLES, "Icosahedron", true);
+    // An icosahedron is defined by three rectangles
+    // which intersect, then draw triangles connecting
+    // verts of the rectangles to verts nearby.
+    //
+    // I define the rectangles, then the triangles (based on the quads)
+    // feel free to comment out the triangles to see the original quads.
+    //
+    // Define the three rectangles
+    // Rect1 Yellow
+    glColor3f(1.0,1.0,0.0);
+    glVertex3f(1.618,0.0,-1.0); // V1
+    glVertex3f(1.618,0.0,1.0); // V2 // Right angle
+    glVertex3f(-1.618,0.0,1.0); // V3
     
+    //Cyan
+    glColor3f(0.0,1.0,1.0);
+    glVertex3f(-1.618,0.0,1.0); // V3
+    glVertex3f(-1.618,0.0,-1.0); // V4
+    glVertex3f(1.618,0.0,-1.0); // V2
+
+    // Rect2 Red/Pink
+    glColor3f(1.0,0.0,0.3);
+    glVertex3f(0.0,1.0,-1.618); // V5
+    glVertex3f(0.0,1.0,1.618); // V6 // Right Angle
+    glVertex3f(0.0,-1.0,1.618); // V7
+
+    // Green
+    glColor3f(0.0,1.0,0.0);
+    glVertex3f(0.0,-1.0,1.618);
+    glVertex3f(0.0,-1.0,-1.618); // V8 // Right Angle
+    glVertex3f(0.0,1.0,-1.618);
+
+    // Rect3 Black
+    glColor3f(0.0,0.0,0.0);
+    glVertex3f(-1.0,1.618,0.0); // V9
+    glVertex3f(1.0,1.618,0.0); // V10
+    glVertex3f(1.0,-1.618,0.0); // V11
+    
+    // Grey
+    glColor3f(0.5,0.5,0.5);
+    glVertex3f(1.0,-1.618,0.0);
+    glVertex3f(-1.0,-1.618,0.0); // V12
+    glVertex3f(-1.0,1.618,0.0);
+    
+    //Connecting Tris (Beware, there are many)
+    //Blue
+    glColor3f(0.0,0.0,1.0);
+    glVertex3f(1.618,0.0,-1.0);
+    glVertex3f(0.0,1.0,-1.618);
+    glVertex3f(1.0,1.618,0.0); 
+    // Orange
+    glColor3f(1.0,0.5,0.0);
+    glVertex3f(-1.0,1.618,0.0); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(-1.618,0.0,-1.0);
+    // Magenta
+    glColor3f(1.0,0.0,1.0);
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(1.618,0.0,-1.0);
+    glVertex3f(1.618,0.0,1.0); 
+    //Mauve
+    glColor3f(0.7,0.4,0.6);
+    glVertex3f(-1.0,1.618,0.0);
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(0.0,1.0,-1.618);
+    //Teal/grey-blue
+    glColor3f(0.4,0.6,0.7);
+    glVertex3f(-1.0,1.618,0.0);
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    //Leaf-green
+    glColor3f(0.3,0.7,0.2);
+    glVertex3f(1.0,1.618,0.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    glVertex3f(1.618,0.0,1.0); 
+    //pink-white
+    glColor3f(1.0,0.7,0.7);
+    glVertex3f(1.618,0.0,1.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    glVertex3f(0.0,-1.0,1.618);
+    // "brat" green
+    glColor3f(0.5,0.7,0.0);
+    glVertex3f(1.0,-1.618,0.0);
+    glVertex3f(1.618,0.0,-1.0);
+    glVertex3f(1.618,0.0,1.0); 
+    //purple
+    glColor3f(0.5,0.0,0.7);
+    glVertex3f(-1.0,-1.618,0.0);
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(-1.618,0.0,-1.0);
+    //light-blue
+    glColor3f(0.8,0.8,1.0);
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(0.0,-1.0,1.618); 
+    //tan
+    glColor3f(0.9,0.7,0.6);
+    glVertex3f(1.618,0.0,-1.0); 
+    glVertex3f(0.0,1.0,-1.618); 
+    glVertex3f(0.0,-1.0,-1.618); 
+    // orange-yellow?
+    glColor3f(1.0,0.8,0.4);
+    glVertex3f(1.0,-1.618,0.0); 
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(0.0,-1.0,1.618); 
+    //light-grey
+    glColor3f(0.6,0.6,0.6);
+    glVertex3f(-1.618,0.0,-1.0); 
+    glVertex3f(0.0,1.0,-1.618); 
+    glVertex3f(0.0,-1.0,-1.618); 
+    //light-light-blue
+    glColor3f(0.3,0.3,0.8);
+    glVertex3f(1.0,-1.618,0.0); 
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(0.0,-1.0,-1.618); 
+    //RED
+    glColor3f(1.0,0.1,0.1);
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(-1.618,0.0,-1.0); 
+    //Black
+    glColor3f(0.0,0.0,0.0);
+    glVertex3f(0.0,1.0,-1.618); 
+    glVertex3f(-1.618,0.0,-1.0); 
+    glVertex3f(-1.0,1.618,0.0); 
+    //Bright-yellow
+    glColor3f(1.0,1.0,0.0);
+    glVertex3f(-1.618,0.0,-1.0); 
+    glVertex3f(-1.0,-1.618,0.0); 
+    glVertex3f(0.0,-1.0,-1.618); 
+    //dark-grey
+    glColor3f(0.4,0.4,0.4)
+    glVertex3f(1.618,0.0,1.0); 
+    glVertex3f(0.0,-1.0,1.618);
+    glVertex3f(1.0,-1.618,0.0);
+    //very-light-grey
+    glColor3f(0.9,0.9,0.85)
+    glVertex3f(0.0,-1.0,-1.618); 
+    glVertex3f(1.0,-1.618,0.0);
+    glVertex3f(1.618,0.0,-1.0); 
+    //eycalyptus
+    glColor3f(0.3,1.0,0.7);
+    glVertex3f(0.0,-1.0,1.618); 
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    //roywal purple (last one PHEW)
+    glColor3f(0.4,0.3,0.6);
+    glVertex3f(-1.618,0.0,1.0); 
+    glVertex3f(0.0,1.0,1.618); 
+    glVertex3f(-1.0,1.618,0.0); 
+
+    glEnd();
+}
+
+function makeRevolution2(smoothness, points){
+
+    glBegin(GL_TRIANGLES, "Revolution2", true)
+        const numFacets = smoothness;
+        const dAngle = 2.0 * Math.PI / numFacets;
+        const width = 1.0;
+
+        for(let facet = 0; facet < numFacets; facet++){
+            const aCoord = dAngle * facet;
+
+            for(let i = 0; i < (points.length - 1); i++) {
+                console.log(points[i])
+
+                const x0 = points[i][0];
+                const xa0 =  (width * Math.sin(aCoord));
+                const z0 = points[i][0];
+                const za0 = Math.cos(aCoord);
+                const x1 = points[i+1][0];
+                const xa1 = (width * Math.sin(aCoord + dAngle));
+                const z1 = points[i+1][0];
+                const za1 = Math.cos(aCoord + dAngle);
+
+                const y0 = points[i][1];
+                const y1 = points[i+1][1];
+
+                // Fun little colors!
+                if (i % 2 == 0) {
+                    glColor3f(0.5,0.3,0.9);
+                } else {
+                    glColor3f(0.3,0.5,0.3);
+                }
+
+                glVertex3f(x0 * xa0,y0,z0 * za0);
+                glVertex3f(x1 * xa0,y1,z1 * za0);
+                glVertex3f(x0 * xa1,y0,z0 * za1);
+
+                if (i % 2 != 0) {
+                    glColor3f(0.8,0.1,0.3);
+                } else {
+                    glColor3f(0.3,0.8,0.3);
+                }
+
+                glVertex3f(x1 * xa1,y1,z1 * za1);
+                glVertex3f(x1 * xa0,y1,z1 * za0);
+                glVertex3f(x0 * xa1,y0,z0 * za1);
+
+            }
+
+        }
+    glEnd();
+
+}
+
+function makeSphere(smoothness) {
+    // begin by defining the variables
+    const width = 2.0;
+    // segments and rings used to be two paramaters defining the number
+    // of longitudinal and latitudinal slices respectively
+    const num_segs = smoothness;
+    const num_rings = smoothness;
+
+    const dAngle = 2 * Math.PI / num_segs;
+
+    // Begin making a sphere
+    glBegin(GL_TRIANGLES,"Sphere", true);
+
+    //make a ring of triangles, try to do it iteratively, going ring by ring
+    for (let ring = 0; ring < (num_rings); ring++){
+        // Create var about the top and bottom of the ring
+        const ring_top = (width/2.0) * (Math.cos(dAngle * ring));
+        const ring_bottom = (width /2.0) * (Math.cos(dAngle * (ring + 1)));
+
+        // Ring and Rung radius are a calculation of how far out the top
+        // and bottom of each ring should be from center
+        const ring_radius = (width / 2.0) * Math.sin(dAngle * ring);
+        const rung_radius = (width / 2.0) * Math.sin(dAngle * (ring + 1));
+
+        // Loop through every slice in the ring (named segments), then create
+        // a quad based on the input information
+        for (let i = 0; i < num_rings/2; i += 1) {
+            const aMid = dAngle * i;
+            
+            // Mid0 and Mid1 are the coordinates for the top of the ring
+            // based on the ring radius
+            const xMid0 = Math.cos(aMid) * (ring_radius);
+            const yMid0 = Math.sin(aMid) * (ring_radius);
+            const xMid1 = Math.cos(aMid + dAngle) * (ring_radius);
+            const yMid1 = Math.sin(aMid + dAngle) * (ring_radius);
+
+            // Same thing, but for the bottom of the ring and rung_radius
+            const xMid2 = Math.cos(aMid) * (rung_radius);
+            const yMid2 = Math.sin(aMid) * (rung_radius);
+            const xMid3 = Math.cos(aMid + dAngle) * (rung_radius);
+            const yMid3 = Math.sin(aMid + dAngle) * (rung_radius);
+
+            // Draw the triangles (finally)
+            glColor3f(0.25, 0.50, 0.75);
+            glVertex3f(xMid0, yMid0,  ring_top);
+            glVertex3f(xMid2, yMid2, ring_bottom);
+            glVertex3f(xMid3, yMid3, ring_bottom);
+
+            glColor3f(0.50, 0.75, 0.80);
+            glVertex3f(xMid0, yMid0,  ring_top);
+            glVertex3f(xMid3, yMid3, ring_bottom);
+            glVertex3f(xMid1, yMid1,  ring_top);
+
+        }
+    }
+    glEnd();
+}
+
+function table_items(){
+    //Draw each table item and position it!
 }
 
 // drawStillLife
@@ -735,6 +1004,7 @@ function drawStillLife() {
 
     drawRoom();
     drawTable(1.0,0.5,0.1);
+    table_items();
 
 }
 
