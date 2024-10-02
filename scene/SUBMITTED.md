@@ -4,7 +4,7 @@ I will specify the line range for each section of the project. Some of the pre-e
 
 ## 2D Scene
 ### Lines 201 - 350
-I decided to make waves (literally) in the scene. I attempted to create a periscope that could be controlled by the slider below. You can also click and drag the waves around.
+I decided to make waves (literally) in the scene. You can click and drag the waves around. An attempt to make a periscope exists in the code (and is commented out). I ran out of time/patience to make it work.
 
 ## Recursive Snowflake
 ### Lines 351 - 398
@@ -18,4 +18,4 @@ The objects are sitting comfortably on it, I'm not sure if they are interfacing 
 
 ## Animation
 ### Lines 1079 - ...
-As of writing, this is currently in progress, the project may be submitted before I complete the animation component.
+As of writing, this is currently in progress, the project may be submitted before I complete the animation component. I aim to submit the animation within 24hrs

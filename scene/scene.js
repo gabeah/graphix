@@ -88,6 +88,8 @@ let gShoulder = 0.0;
 let gElbow = 0.0;
 let gWrist = 15 / Math.PI;
 
+let zBall = 15.0 / Math.Pi;
+
 
 // ***** HOUSE *****
 
@@ -1136,9 +1138,21 @@ function makeWireSphere(smoothness) {
 // though only if `gAnimate` is set to `true`.
 //
 function drawJuggleBall() {
+    if (gAnimate) {
+        zBall += (15.0/180.0) * Math.Pi;
+    }
+    /*
+    const ballHeight = 15 * Math.cos(zBall)
+    console.log(zBall);
+    console.log(ballHeight);
+
     glPushMatrix();
+    glTranslatef(0,ballHeight,0);
+    glRotatef(90, 1,0,0);
+    glScalef(0.5,.5,.5);
     glBeginEnd("WireSphere");
     glPopMatrix();
+    */
 }
 
 function drawWavingArm() {
@@ -1283,7 +1297,7 @@ function draw() {
         // values (i.e the z values) range between -2 and 2.
         //
         drawOcean();
-        drawBoat();
+        //drawBoat();
         
     } else if (gScene == "recursive") {
 
@@ -1603,7 +1617,7 @@ function main() {
     makeSphere(32);
     makeRevolution2(32, points1);
     makeIcosahedron();
-    makeWireCube(16);
+    makeWireSphere(16);
 
     ortho(800,640);
 
