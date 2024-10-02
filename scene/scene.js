@@ -174,7 +174,7 @@ function HEX() {
 //
 // Draws a unit square with lower-left corner at the origin.
 //
-function BOX() {
+function BOX() { //No extra push/pop
     RTRI();
     glPushMatrix();
     glTranslatef(1.0,1.0,0.0);
@@ -188,7 +188,7 @@ function BOX() {
 // Draws a 1x2 rectangle (1 wide, 2 high) with lower-left corner at the
 // origin.
 //
-function RECT() {
+function RECT() { // no extra push/pop
     BOX()
     glPushMatrix()
     glTranslatef(0.0,1.0,0.0)
@@ -200,7 +200,7 @@ function RECT() {
 // Gabe's Code
 // Draw ocean w/ wave
 
-function drawWave() {
+function drawWave() { // No extra push/pop
     
     // Draw everything in relation to each other
 
@@ -266,7 +266,6 @@ function drawBoat() {
     
     BOX();
     glPopMatrix();
-
     // Restore
 
 }
@@ -371,54 +370,28 @@ function makeSquare() {
 }
 
 
-// drawSquareSierpinski
-//
-// Draws the recursive figure of a Sierpinski square.  The integer
-// parameter `levels` indicates how many recursive levels should be
-// shown. 0 indicates that only a solid square gets drawn.
-//
-function drawSquareSierpinski(levels) {
-    if (levels == 0) {  
-        glBeginEnd("Square");
-    } else {
-        glPushMatrix();
-        glScalef(1/3, 1/3, 1/3);
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <=1; j++) {
-                if ((i != 0) || (j != 0)) {
-                    glPushMatrix();
-                    glTranslatef(i,j,0);
-                    drawSquareSierpinski(levels-1);
-                    glPopMatrix();
-                }
-            }
-        }
-        glPopMatrix();
-    }         
-}
-
+// Implementation of Sierpinski's Hexagon (but it looks like a snowflake)
 function drawSnowflake(levels) {
-    console.log("Hello world")
-    console.log(levels)
-    glPopMatrix();
-    glPushMatrix();
+    //console.log("Hello world")
+    //console.log(levels)
     
     if (levels == 0) {
         glBeginEnd("HEX");
-        glPopMatrix();
+    
     } else {
         glPushMatrix();
-        glScalef(1/6,1/6,1/6)
-        for (let i = 0; i <= 6; i++){
-            for (let j = 0; j <=6; j++) {
-                if ((i != 0) || (j != 0)) {
-                    glPushMatrix();
-                    glTranslatef(i,j,0);
-                    drawSnowflake(levels-1);
-                    glPopMatrix();
-                }
-            }
+        glScalef(1/3, 1/3, 1/3);
+        const sides = 6;
+        const dtheta = 2.0 * Math.PI / sides;
+        for (let i = 0; i < 6; i++) {
+            const theta = i * dtheta;
+            glPushMatrix();
+            // draw a pie slice on the disk
+            glTranslatef(Math.cos(theta), Math.sin(theta),0);
+            drawSnowflake(levels-1);
+            glPopMatrix();
         }
+        glPopMatrix();
     }
 }
 
@@ -722,6 +695,7 @@ function drawRoom() {
 
 }
 
+// Copied from project1
 function makeIcosahedron(){
 
     // draw an icosahedron
@@ -880,6 +854,9 @@ function makeIcosahedron(){
     glEnd();
 }
 
+// Points for revolution (top hat)
+let points1 = [[0,0.9],[0,1],[.4,1],[.4,.2],[.6,.2],[.6,0],[.3,0],[0.3,.9],[0,.9]]
+// Copied from project1
 function makeRevolution2(smoothness, points){
 
     glBegin(GL_TRIANGLES, "Revolution2", true)
@@ -891,7 +868,7 @@ function makeRevolution2(smoothness, points){
             const aCoord = dAngle * facet;
 
             for(let i = 0; i < (points.length - 1); i++) {
-                console.log(points[i])
+                //console.log(points[i])
 
                 const x0 = points[i][0];
                 const xa0 =  (width * Math.sin(aCoord));
@@ -933,6 +910,7 @@ function makeRevolution2(smoothness, points){
 
 }
 
+// Code copied from project1
 function makeSphere(smoothness) {
     // begin by defining the variables
     const width = 2.0;
@@ -976,12 +954,12 @@ function makeSphere(smoothness) {
             const yMid3 = Math.sin(aMid + dAngle) * (rung_radius);
 
             // Draw the triangles (finally)
-            glColor3f(0.25, 0.50, 0.75);
+            glColor3f(0.5, 0.70, 0.8);
             glVertex3f(xMid0, yMid0,  ring_top);
             glVertex3f(xMid2, yMid2, ring_bottom);
             glVertex3f(xMid3, yMid3, ring_bottom);
 
-            glColor3f(0.50, 0.75, 0.80);
+            glColor3f(0.80, 0.6, 0.80);
             glVertex3f(xMid0, yMid0,  ring_top);
             glVertex3f(xMid3, yMid3, ring_bottom);
             glVertex3f(xMid1, yMid1,  ring_top);
@@ -993,6 +971,28 @@ function makeSphere(smoothness) {
 
 function table_items(){
     //Draw each table item and position it!
+    glPushMatrix();
+    glTranslatef(0.3,0.65,0);
+    glScalef(0.1,.1,.1);
+    glRotatef(-127.5,1,0,1);
+    glBeginEnd("Icosahedron");
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(-.2,.68,.2)
+    glScalef(0.2,0.2,0.2);
+    glRotatef(-30,0,1,0)
+    glRotatef(-20,1,0,0)
+    glBeginEnd("Sphere");
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(.1,.5,.2);
+    glScalef(0.2,0.2,0.2);
+    glBeginEnd("Revolution2")
+    glPopMatrix();
+
+    
 }
 
 // drawStillLife
@@ -1003,7 +1003,7 @@ function table_items(){
 function drawStillLife() {
 
     drawRoom();
-    drawTable(1.0,0.5,0.1);
+    drawTable(1.0,0.5,0.1);    
     table_items();
 
 }
@@ -1067,6 +1067,65 @@ function makeWireCube() {
     glEnd();
 }
 
+function makeWireSphere(smoothness) {
+    // begin by defining the variables
+    const width = 2.0;
+    // segments and rings used to be two paramaters defining the number
+    // of longitudinal and latitudinal slices respectively
+    const num_segs = smoothness;
+    const num_rings = smoothness;
+
+    const dAngle = 2 * Math.PI / num_segs;
+
+    // Begin making a sphere
+    glBegin(GL_LINES,"WireSphere", true);
+
+    //make a ring of triangles, try to do it iteratively, going ring by ring
+    for (let ring = 0; ring < (num_rings); ring++){
+        // Create var about the top and bottom of the ring
+        const ring_top = (width/2.0) * (Math.cos(dAngle * ring));
+        const ring_bottom = (width /2.0) * (Math.cos(dAngle * (ring + 1)));
+
+        // Ring and Rung radius are a calculation of how far out the top
+        // and bottom of each ring should be from center
+        const ring_radius = (width / 2.0) * Math.sin(dAngle * ring);
+        const rung_radius = (width / 2.0) * Math.sin(dAngle * (ring + 1));
+
+        // Loop through every slice in the ring (named segments), then create
+        // a quad based on the input information
+        for (let i = 0; i < num_rings/2; i += 1) {
+            const aMid = dAngle * i;
+            
+            // Mid0 and Mid1 are the coordinates for the top of the ring
+            // based on the ring radius
+            const xMid0 = Math.cos(aMid) * (ring_radius);
+            const yMid0 = Math.sin(aMid) * (ring_radius);
+            const xMid1 = Math.cos(aMid + dAngle) * (ring_radius);
+            const yMid1 = Math.sin(aMid + dAngle) * (ring_radius);
+
+            // Same thing, but for the bottom of the ring and rung_radius
+            const xMid2 = Math.cos(aMid) * (rung_radius);
+            const yMid2 = Math.sin(aMid) * (rung_radius);
+            const xMid3 = Math.cos(aMid + dAngle) * (rung_radius);
+            const yMid3 = Math.sin(aMid + dAngle) * (rung_radius);
+
+            // Draw the triangles (finally)
+            glColor3f(0.5, 0.70, 0.8);
+            glVertex3f(xMid0, yMid0,  ring_top);
+            glVertex3f(xMid2, yMid2, ring_bottom);
+            glVertex3f(xMid3, yMid3, ring_bottom);
+
+            glColor3f(0.80, 0.6, 0.80);
+            glVertex3f(xMid0, yMid0,  ring_top);
+            glVertex3f(xMid3, yMid3, ring_bottom);
+            glVertex3f(xMid1, yMid1,  ring_top);
+
+        }
+    }
+    glEnd();
+}
+
+
 //
 // drawWavingArm
 //
@@ -1076,6 +1135,12 @@ function makeWireCube() {
 // updated by a certain change in angle when this function executes,
 // though only if `gAnimate` is set to `true`.
 //
+function drawJuggleBall() {
+    glPushMatrix();
+    glBeginEnd("WireSphere");
+    glPopMatrix();
+}
+
 function drawWavingArm() {
     if (gAnimate) {
         gShoulder += 7.5/180.0 * Math.PI;
@@ -1338,8 +1403,8 @@ function draw() {
         // Reorient according to the "trackball" motion of a mouse drag.
         gOrientation.glRotatef();
         
-        drawWavingArm();
-        
+        //drawWavingArm();
+        drawJuggleBall();
         glPopMatrix();
 
     }
@@ -1535,6 +1600,10 @@ function main() {
     makeLight();
     makeWall();
     makeHEX();
+    makeSphere(32);
+    makeRevolution2(32, points1);
+    makeIcosahedron();
+    makeWireCube(16);
 
     ortho(800,640);
 
