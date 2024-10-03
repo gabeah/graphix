@@ -89,6 +89,7 @@ let gElbow = 0.0;
 let gWrist = 15 / Math.PI;
 
 let zBall = 15.0 / Math.Pi;
+console.log(zBall);
 
 
 // ***** HOUSE *****
@@ -1137,14 +1138,15 @@ function makeWireSphere(smoothness) {
 // updated by a certain change in angle when this function executes,
 // though only if `gAnimate` is set to `true`.
 //
+console.log(zBall);
 function drawJuggleBall() {
     if (gAnimate) {
         zBall += (15.0/180.0) * Math.Pi;
     }
-    /*
-    const ballHeight = 15 * Math.cos(zBall)
+    
+    const ballHeight = 15 * Math.cos(zBall);
     console.log(zBall);
-    console.log(ballHeight);
+    //console.log(ballHeight);
 
     glPushMatrix();
     glTranslatef(0,ballHeight,0);
@@ -1152,7 +1154,7 @@ function drawJuggleBall() {
     glScalef(0.5,.5,.5);
     glBeginEnd("WireSphere");
     glPopMatrix();
-    */
+    
 }
 
 function drawWavingArm() {
