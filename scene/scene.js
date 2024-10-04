@@ -83,15 +83,6 @@ let gLightDepth = -0.25;
 let gLightRadius = 1.5;
 let gLightHalfArc = Math.PI * 45.0 / 180.0;
 
-// For the waving arm...
-let gShoulder = 0.0;
-let gElbow = 0.0;
-let gWrist = 15 / Math.PI;
-
-let zBall = 15.0 / Math.Pi;
-console.log(zBall);
-
-
 // ***** HOUSE *****
 
 //
@@ -1129,102 +1120,89 @@ function makeWireSphere(smoothness) {
 }
 
 
+// drawJuggleBall()
+// 
+// This function draws a leg juggling a ball
 //
-// drawWavingArm
-//
-// Draws an arm and hand that waves according to the values of the
-// globals `gShoulder`, `gElbow`, and `gWrist`. These globals give the
-// angle in radians for each of these joints. The three globals are
-// updated by a certain change in angle when this function executes,
-// though only if `gAnimate` is set to `true`.
-//
-console.log(zBall);
+// Note: In my infitite wisdom, I did create the leg starting from the
+//          ankle, which is not how legs operate. However, reversing
+//          the path is costly, and I still learned a lot about how the
+//          transformation matrices work.
+let gAnkle = -15.0;
+let gThigh = 10 * Math.PI;
+let gKnee = 10 * Math.PI;
+let gShin = 10 * Math.PI;
+let zBall = 15 * Math.PI
+
 function drawJuggleBall() {
     if (gAnimate) {
-        zBall += (15.0/180.0) * Math.Pi;
+        gAnkle += 1/180.0 * Math.PI;
+        gThigh += 1/180.0 * Math.PI;
+        gShin += 1/180.0 * Math.PI;
+        gKnee += 1/180 * Math.PI;
+        zBall += 1.0/180.0 * Math.PI;
     }
-    
-    const ballHeight = 15 * Math.cos(zBall);
-    console.log(zBall);
-    //console.log(ballHeight);
+        
+    const width = 0.25;
+    const length = 0.8;
 
+    const ballHeight = Math.cos(zBall);
+    const ankleAngle = -20 * Math.cos(gAnkle);
+    const thighAngle = -15 * Math.sin(gThigh) - 15;
+    const shinAngle = -10 * Math.sin(gShin) + 20;
+    const kneeAngle = 15 * Math.cos(gKnee) + 15;
+
+    glColor3f(0.5, 0.70, 0.8);
+
+    // Soccer Ball
     glPushMatrix();
     glTranslatef(0,ballHeight,0);
     glRotatef(90, 1,0,0);
     glScalef(0.5,.5,.5);
     glBeginEnd("WireSphere");
     glPopMatrix();
-    
-}
 
-function drawWavingArm() {
-    if (gAnimate) {
-        gShoulder += 7.5/180.0 * Math.PI;
-        gElbow += 7.5/180.0 * Math.PI;
-        gWrist += 15/180.0 * Math.PI;
-    }
-    
-    const length = 0.8;
-    const width = 0.25;
-    
-    const shoulderAngle = 20.0 * Math.cos(gShoulder) + 20;
-    const elbowAngle = 40.0 * Math.sin(gElbow) + 40.0;
-    const wristAngle = -75.0 * Math.sin(gWrist);
-
-    glColor3f(0.75,0.85,0.5)
-
+    // Ankle
     glPushMatrix();
     glScalef(1.5,1.5,1.5);
     glTranslatef(-length * 1.5, -length * 1.25, 0.0);
-    glRotatef(shoulderAngle, 0.0, 0.0, 1.0);
+    glRotatef(ankleAngle, 0.0, 0.0, 1.0);
 
-    // Upper arm.
     glPushMatrix();
-    glTranslatef(length/2, 0.0, 0.0);
-    glScalef(length, width, width);
+    glTranslatef(length/2 + .5, -0.5, 0.0);
+    glScalef(length * 1.2, width, width);
     glBeginEnd("WireCube");
     glPopMatrix();
 
-    glTranslatef(length, 0.0, 0.0);
-    glRotatef(elbowAngle, 0.0, 0.0, 1.0);
+    // Shin
+    glTranslatef(.15,.3,0);
+    glRotatef(shinAngle, 0,0,1)
 
-    // Forearm.
     glPushMatrix();
-    glTranslatef(1.5 * length/2, 0.0, 0.0);
-    glScalef(1.4 * length, 0.8 * width, 0.8 * width);
-    glBeginEnd("WireCube");
-    glPopMatrix();
-
-    glTranslatef(1.5 * length, 0.0, 0.0);
-    glRotatef(wristAngle, 0.0, 0.0, 1.0);
-
-    // Palm/hand.
-    glPushMatrix();
-    glTranslatef(width, 0.0, 0.0);
-    glPushMatrix();
-    glScalef(2*width, width, width/2);
-    glBeginEnd("WireCube");
-    glPopMatrix();
-
-    // Fingers
-    for (let f = 0; f < 4; f++) {
-        glPushMatrix();
-        glRotatef(f*15.0-15.0, 0.0, 0.0, 1.0);
-        glTranslatef(width*2,0.0,0.0);
-        glScalef(width*1.5,width/4,width/4);
-        glBeginEnd("WireCube");
-        glPopMatrix();
-    }
-    // Thumb
-    glPushMatrix();
-    glRotatef(90, 0.0, 0.0, 1.0);
-    glTranslatef(width,0.0,0.0);
-    glScalef(width,width/3,width/3);
+    glScalef(width * 2, length * 2, width * 2);
     glBeginEnd("WireCube");
     glPopMatrix();
     
+    // Knee
+    glTranslatef(0,1,0);
+    glRotatef(kneeAngle, 0,0,1);
+    
+    glPushMatrix();
+    glScalef(.4,.4,.4)
+    glBeginEnd("WireCube");
     glPopMatrix();
+
+    // Thigh
+    glTranslatef(-.6,.6,0);
+    glRotatef(thighAngle, 0,0,1.0)
+
+    glPushMatrix();
+    glScalef(1.5,0.7,.8)
+    glBeginEnd("WireCube");
     glPopMatrix();
+
+    // Fin
+    glPopMatrix();    
 }
 
 // ***** DRAW *****
