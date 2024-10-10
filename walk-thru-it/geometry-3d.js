@@ -167,7 +167,7 @@ class Vector3d {
         /*
          * Sum of this and other.
          */
-        return Vector3d(this.dx + other.dx,
+        return new Vector3d(this.dx + other.dx,
                             this.dy + other.dy,
                             this.dz + other.dz);
     }
@@ -183,7 +183,7 @@ class Vector3d {
         /*
          * Same vector as this, but scaled by the given value.
          */
-        return Vector3d(scalar * this.dx,
+        return new Vector3d(scalar * this.dx,
                             scalar * this.dy,
                             scalar * this.dz);
     }
@@ -206,7 +206,7 @@ class Vector3d {
         /*
          * Cross product of this with other.
          */
-        return Vector3d(this.dy*other.dz-this.dz*other.dy,
+        return new Vector3d(this.dy*other.dz-this.dz*other.dy,
                             this.dz*other.dx-this.dx*other.dz,
                             this.dx*other.dy-this.dy*other.dx);
     }
@@ -249,7 +249,7 @@ Vector3d.prototype.withComponents = function(cs) {
     /* 
      * Construct a vector from an array.
      */
-    return Vector3d(cs[0],cs[1],cs[2]);
+    return new Vector3d(cs[0],cs[1],cs[2]);
 }
 
 Vector3d.prototype.randomUnit = function() {
