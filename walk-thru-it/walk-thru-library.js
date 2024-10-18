@@ -11,8 +11,6 @@
 // determine whether a portion of an object edge is hidden by some
 // other object.
 //
-
-
 function segmentsIntersect(P0,P1,Q0,Q1) {
     //
     // Determine whether two 2-D line segments intersect. The first
@@ -34,7 +32,32 @@ function segmentsIntersect(P0,P1,Q0,Q1) {
     // STARTER CODE: just assumes they intersect at the midpoint of
     //               segment P0 P1, i.e. s = 1/2.
     
-    return 0.5; 
+    const origin = Q0;
+
+    const u = Q1.minus(Q0).div(Q1.dist(Q0));
+    const v = u.perp();
+
+    const y0 = P0.minus(origin).dot(v);
+    const y1 = P1.minus(origin).dot(v);
+
+    if (y1 * y0 > 0){
+        return null;
+    }
+   
+    const s = y0/(y0-y1);
+    const bigS = P0.combo(s, P1);
+    const t = (bigS.dist(Q0)) / (Q1.dist(Q0));
+    if (Q1.dist(Q0) == 0){console.log("DIV 0 ALERT");}
+
+    if (t > 1) {
+        console.log("t too big!!!")
+        return null;
+    } else if (t < 0) {
+        console.log("t too small")
+        return null
+    }
+    console.log("Breakpoint located at", s, " of ", (P0,P1))
+    return s; 
 }
 
 function rayFacetIntersect(Q1,Q2,Q3,R,Rp) {

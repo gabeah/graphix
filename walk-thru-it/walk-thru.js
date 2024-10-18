@@ -322,10 +322,14 @@ class SceneCamera {
         // STARTER CODE: just sets the `into` direction along x,
         //               the `right` direction along y, and the
         //               `up` direction along z. 
+        let e3 = towards.times(1/towards.norm())
+        let e1 = (e3.cross(upward)).times(1/e3.cross(upward).norm())
+        let e2 = e3.cross(e1).times(1/e3.cross(e1).norm())
+
         this.center = center;
-        this.right  = new Vector2d( 0.0,-1.0, 0.0);
-        this.up     = new Vector2d( 0.0, 0.0, 1.0);
-        this.into   = new Vector2d( 1.0, 0.0, 0.0);
+        this.right  = e1;
+        this.up     = e2;
+        this.into   = e3;
     }
 
     project(location) {
@@ -346,12 +350,39 @@ class SceneCamera {
         //               the camera is looking directly along the x
         //               axis from where it sits.
         //
+        // const toLocation  = location.minus(this.center);
+        // const result1 = {
+        //     point: location,
+        //     projection: new Point2d(-toLocation.dy, toLocation.dz),
+        //     depth: toLocation.dx
+        // };
+
+        // Gabe's Code
+        
         const toLocation  = location.minus(this.center);
+
+        const locPrime = this.center.plus(location.minus(this.center).div(toLocation.norm()));
+        console.log("location given at:");
+        console.log(location);
+
+        console.log("initial locPrime cal at:");
+        console.log(locPrime);
+        
+        const locxyz = locPrime.components()
+
         const result = {
             point: location,
-            projection: new Point2d(-toLocation.dy, toLocation.dz),
+            projection: new Point2d(-locxyz[1], locxyz[2]),
             depth: toLocation.dx
         };
+
+        console.log(locxyz)
+
+        console.log("locprime dy:")
+        console.log(locPrime.dy)
+
+        console.log("result is:")
+        console.log(result)
 
         return result;
     }
@@ -464,6 +495,27 @@ class SceneEdge {
 
         // STARTER CODE: an edge is only a single segment, from
         //               0.0 to 1.0.
+
+        const P0 = this.start.projection;
+        const P1 = this.end.projection;
+
+        for (let edge of edges) {
+
+            //console.log(edge)
+            const Q0 = edge.start.projection;
+            const Q1 = edge.end.projection;
+            //console.log("Q0 & Q1: ", Q0, Q1)
+
+            const s = segmentsIntersect(P0, P1, Q0, Q1);
+
+            if (s != null && s != NaN) {
+                crossings.push[s];
+            }
+
+        }
+
+        //crossings.sort();
+        console.log("breakpoints array ", crossings)
         return crossings;
     }
 
@@ -490,6 +542,7 @@ class SceneEdge {
         // These are places where the other scene edge crosses this edge
         // when looking through this camera.
         const crossings = this.breakpoints(segments);
+        console.log(crossings)
 
         const p0  = this.start.point;
         const p1  = this.end.point;
@@ -512,5 +565,21 @@ class SceneEdge {
         document.line(ppdf0.x, ppdf0.y, ppdf1.x, ppdf1.y);
         document.circle(ppdf0.x, ppdf0.y, 0.35, "F");
         document.circle(ppdf1.x, ppdf1.y, 0.35, "F");
+
+
+        for (let b = 0; b < crossings.length; b++) {
+            //console.log(crossings[b]);
+            
+            const intersect = pp0.combo(crossings[b], pp1);
+            //console.log(intersect);
+            
+            const pdfinter = toPDFcoord(intersect);            
+            //console.log("PDF coords: ", pdfinter);
+            
+            document.circle(pdfinter.x, pdfinter.y, 0.35, "F");
+            
+        }
+
+        
     }        
 }
