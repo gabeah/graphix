@@ -1109,7 +1109,7 @@ async function makePDF() {
     doc.setFont("helvetica", "italic");
     doc.text("My Flip Book", 29, 27, null, null, "center");
     doc.setFont("helvetica", "bold");
-    doc.text("by YOUR NAME", 29, 37, null, null, "center");
+    doc.text("by Gabe Howland", 29, 37, null, null, "center");
     doc.setFont("courier", "bold");
     doc.text("#"+id, 29, 47, null, null, "center");
     makeCropMarks(doc);

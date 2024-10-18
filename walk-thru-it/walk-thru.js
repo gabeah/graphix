@@ -358,16 +358,19 @@ class SceneCamera {
         // };
 
         // Gabe's Code
-        
         const toLocation  = location.minus(this.center);
 
+        // Create the vector (through similar triangles) that represents
+        // the point projected on the camera
         const locPrime = this.center.plus(location.minus(this.center).div(toLocation.norm()));
-        console.log("location given at:");
-        console.log(location);
+        // console.log("location given at:");
+        // console.log(location);
 
-        console.log("initial locPrime cal at:");
-        console.log(locPrime);
+        // console.log("initial locPrime cal at:");
+        // console.log(locPrime);
         
+        // Got an error when trying to call the y,z values, thus dumped the
+        // values to a list and went from there
         const locxyz = locPrime.components()
 
         const result = {
@@ -376,13 +379,14 @@ class SceneCamera {
             depth: toLocation.dx
         };
 
-        console.log(locxyz)
+        // so.. much.. debugging..
+        // console.log(locxyz)
 
-        console.log("locprime dy:")
-        console.log(locPrime.dy)
+        // console.log("locprime dy:")
+        // console.log(locPrime.dy)
 
-        console.log("result is:")
-        console.log(result)
+        // console.log("result is:")
+        // console.log(result)
 
         return result;
     }
@@ -485,6 +489,7 @@ class SceneEdge {
         // Each pair of consecutive values determines a
         // segment of the edge.
         
+        // Make sure to include 0.0 and 1.0
         const crossings = [0.0,1.0];
 
         //
@@ -492,9 +497,6 @@ class SceneEdge {
         //        of segements whose projection crosses this
         //        one. Use your 2D segment intersection code.
         //
-
-        // STARTER CODE: an edge is only a single segment, from
-        //               0.0 to 1.0.
 
         const P0 = this.start.projection;
         const P1 = this.end.projection;
@@ -506,10 +508,16 @@ class SceneEdge {
             const Q1 = edge.end.projection;
             //console.log("Q0 & Q1: ", Q0, Q1)
 
-            // THANKS DUNCAN AND ZEKE
+            // THANKS DUNCAN AND ZEKE FOR DISCUSSING THIS IF STATEMENT
             if (Q1.minus(Q0).cross(P1.minus(P0)) != 0) {
+
+                // run segmentsIntersect on points, hope for a scalar
                 const s = segmentsIntersect(P0, P1, Q0, Q1);
                 //console.log("s found at: ", s)
+
+                // ended up getting NaN outputted. I expect this is due to
+                // parallel lines. I don't believe the if-statement will
+                // actually catch it, luckily I fixed the problem of NaN
                 if (s != null) {
                     if (s != NaN) {
                     crossings.push(s);
@@ -519,7 +527,8 @@ class SceneEdge {
             }
         }
 
-        // Courtesy of Duncan
+        // Courtesy of Duncan, apparently just running list.sort() can throw
+        // errors in encoding, this simple helper function sorts it properly
         function sort_assist(a, b){
             return a-b;
         }
@@ -539,23 +548,31 @@ class SceneEdge {
         //
         // STARTER CODE: just says all edge segments are visible.
 
+        // Define a midpoint to set Rp to when running RFI
         const breakMid = breakpointA.combo(0.5, breakpointB);
 
+        // Not close to optimized, but iterate through ALL objects...
         for (let object of objects) {
+            // ALL the faces of the object...
             for (let face of object.faces) {
 
+                //
                 if (this.faces.includes(face)) {continue;}
 
+                // Pull out the Q1, Q2, Q3 that define each face
                 const Q1 = object.vertex(face.vertexi[0]).position;
                 const Q2 = object.vertex(face.vertexi[1]).position;
                 const Q3 = object.vertex(face.vertexi[2]).position;
 
+                // run RFI
                 const doesIntersect = rayFacetIntersect(Q1, Q2, Q3, camera.center, breakMid);
 
+                // if RFI outputs anything, then a face exists which means the segment
+                // shan't be visible
                 if (doesIntersect != null) {return false;}
             }
         }
-
+        // if no face intersects, then return true
         return true;
     }
         
@@ -568,42 +585,50 @@ class SceneEdge {
         // Compute any/all breakpoints along the segment.
         // These are places where the other scene edge crosses this edge
         // when looking through this camera.
-        const crossings = this.breakpoints(segments);
-        console.log(crossings)
 
+        // run breakpoints for all segments, put all the intersections with
+        // a given scene edge into a list
+        const crossings = this.breakpoints(segments);
+        //console.log(crossings)
+
+        // given by Jim
         const p0  = this.start.point;
         const p1  = this.end.point;
         const pp0 = this.start.projection;
         const pp1 = this.end.projection;
 
-        // TO DO: go through each of the segments of the edge, as
-        //        defined by the breakpoints made by crossing edges.
-        //        If the segment is visible (isn't obscured by some
-        //        object's facet) draw it.
+        // Set line width
         document.setLineWidth(0.125);
 
+        // Iterate through all scalars from crossings
         for (let b = 0; b < crossings.length-1; b++) {
             //console.log(crossings[b]);
             
             //const intersect = pp0.combo(crossings[b], pp1);
             //console.log("intersect: ",intersect);
             
+            // define 2 points defined by the previous/next intersection point
             const breakA = p0.combo(crossings[b], p1);
             const breakB = p0.combo(crossings[b+1], p1);
 
+            // check if the segment defined by breakA & breakB is visible
             const edge_check = this.isSegmentVisible(breakA, breakB, camera, objects);
 
+            // project what the points would be onto the camera plane
             const projA = pp0.combo(crossings[b], pp1);
             const projB = pp0.combo(crossings[b+1], pp1);
 
+            // turn that into PDF coords
             const pdfA = toPDFcoord(projA);
             const pdfB = toPDFcoord(projB);
 
-            if (this.isSegmentVisible(breakA, breakB, camera, objects)) {
+            // if the segment is visible (yay!), set the color to black and draw the line
+            if (edge_check) {
                 document.setDrawColor(gIncludedColor.r,gIncludedColor.g,gIncludedColor.b);
                 document.line(pdfA.x, pdfA.y, pdfB.x, pdfB.y);
             }
 
+            // To show all the intersection points.
             //document.circle(pdfA.x, pdfA.y, 0.35, "F");
             //document.circle(pdfB.x, pdfB.y, 0.35, "F");
             
