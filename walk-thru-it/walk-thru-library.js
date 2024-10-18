@@ -11,7 +11,8 @@
 // determine whether a portion of an object edge is hidden by some
 // other object.
 //
-function segmentsIntersect(P0,P1,Q0,Q1) {
+
+function segmentsIntersect(P0, P1, Q0, Q1) {
     //
     // Determine whether two 2-D line segments intersect. The first
     // segment runs between points P0 and P1. The second segment runs
@@ -31,7 +32,7 @@ function segmentsIntersect(P0,P1,Q0,Q1) {
     
     // STARTER CODE: just assumes they intersect at the midpoint of
     //               segment P0 P1, i.e. s = 1/2.
-    
+    const EPSILON = 0.001  
     const origin = Q0;
 
     const u = Q1.minus(Q0).div(Q1.dist(Q0));
@@ -43,20 +44,25 @@ function segmentsIntersect(P0,P1,Q0,Q1) {
     if (y1 * y0 > 0){
         return null;
     }
-   
+    //console.log("y values: ", y0, y1)
     const s = y0/(y0-y1);
     const bigS = P0.combo(s, P1);
-    const t = (bigS.dist(Q0)) / (Q1.dist(Q0));
-    if (Q1.dist(Q0) == 0){console.log("DIV 0 ALERT");}
 
-    if (t > 1) {
-        console.log("t too big!!!")
-        return null;
-    } else if (t < 0) {
-        console.log("t too small")
+    //console.log("t is at: ", t)
+
+    // Help from Zeke
+    if (Q1.dist(bigS) + Q0.dist(bigS) <= Q1.dist(Q0) - EPSILON) {
+        return null
+    } else if (Q1.dist(bigS) + Q0.dist(bigS) >= Q1.dist(Q0) + EPSILON) {
         return null
     }
-    console.log("Breakpoint located at", s, " of ", (P0,P1))
+
+    if (s <= 0 || s >= 1) {
+        return null
+    }
+
+    
+    //console.log("Breakpoint located at", s, " of ", (P0,P1))
     return s; 
 }
 
@@ -82,7 +88,33 @@ function rayFacetIntersect(Q1,Q2,Q3,R,Rp) {
     // STARTER CODE: just assumes it hits the facet at its barycenter.
     //
 
-    let S = Q1.combo(0.66666667, Q2.combo(0.5,Q3));
+    const v2 = Q2.minus(Q1);
+    const v3 = Q3.minus(Q1);
+    const r = Rp.minus(R)
+
+    const normal = v2.cross(v3);
+
+    const Delta = Q1.minus(R).dot(normal);
+    const delta = r.dot(normal);
+
+    const S = R.plus(r.times(Delta/delta));
+
+    // Thanks Duncan
+    const c1 = Q2.minus(Q1).cross(S.minus(Q1));
+    const c2 = S.minus(Q1).cross(Q3.minus(Q1));
+
+    const c3 = Q2.minus(Q3).cross(S.minus(Q3));
+    const c4 = S.minus(Q3).cross(Q1.minus(Q3));
+
+    if (Delta/delta > 1 || Delta/delta < 0) {return null}
+
+    if (c1.dot(c2) <= 0 || c3.dot(c4) <= 0) {
+        return null;
+    }
+
+    console.log(S)
+
+    //let S = Q1.combo(0.66666667, Q2.combo(0.5,Q3));
     return {point:S, distance:S.dist(R)};
 }    
 

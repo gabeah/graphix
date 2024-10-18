@@ -67,14 +67,14 @@ const EPSILON = 0.00000001;
 
 // Ink colors for drawing in the PDF
 const BLACK = {r:25, g:25, b:25};
-const PINK = {r:255, g:225, b:240};
+const PINK = {r:255, g:15, b:100};
 const TEAL = {r:0, g:75, b:125};
 
 // Colors of the included and excluded portions of a drawn edge.
 // When the excluded color is `null`, then that portion is not
 // drawn.
 const gIncludedColor = BLACK;
-const gExcludedColor = null; /* or could make PINK */
+const gExcludedColor = PINK; /* or could make PINK */
 
 class Shot {
     constructor(position0, direction0) {
@@ -506,16 +506,26 @@ class SceneEdge {
             const Q1 = edge.end.projection;
             //console.log("Q0 & Q1: ", Q0, Q1)
 
-            const s = segmentsIntersect(P0, P1, Q0, Q1);
-
-            if (s != null && s != NaN) {
-                crossings.push[s];
+            // THANKS DUNCAN AND ZEKE
+            if (Q1.minus(Q0).cross(P1.minus(P0)) != 0) {
+                const s = segmentsIntersect(P0, P1, Q0, Q1);
+                //console.log("s found at: ", s)
+                if (s != null) {
+                    if (s != NaN) {
+                    crossings.push(s);
+                    }
+                }
+                //if (s == NaN) {console.log("HELP IM NOT A NUMBER!");}
             }
-
         }
 
-        //crossings.sort();
-        console.log("breakpoints array ", crossings)
+        // Courtesy of Duncan
+        function sort_assist(a, b){
+            return a-b;
+        }
+
+        crossings.sort(sort_assist);
+        //console.log("breakpoints array ", crossings);
         return crossings;
     }
 
@@ -527,8 +537,25 @@ class SceneEdge {
         // to `breakpointB`, is hidden by a collection of `objects`
         // when viewed from the perspective of the given `camera`.
         //
-
         // STARTER CODE: just says all edge segments are visible.
+
+        const breakMid = breakpointA.combo(0.5, breakpointB);
+
+        for (let object of objects) {
+            for (let face of object.faces) {
+
+                if (this.faces.includes(face)) {continue;}
+
+                const Q1 = object.vertex(face.vertexi[0]).position;
+                const Q2 = object.vertex(face.vertexi[1]).position;
+                const Q3 = object.vertex(face.vertexi[2]).position;
+
+                const doesIntersect = rayFacetIntersect(Q1, Q2, Q3, camera.center, breakMid);
+
+                if (doesIntersect != null) {return false;}
+            }
+        }
+
         return true;
     }
         
@@ -553,30 +580,32 @@ class SceneEdge {
         //        defined by the breakpoints made by crossing edges.
         //        If the segment is visible (isn't obscured by some
         //        object's facet) draw it.
-
-        // STARTER CODE: just draws the whole edge and its endpoints.
-
-        const ppdf0 = toPDFcoord(pp0);
-        const ppdf1 = toPDFcoord(pp1);        
         document.setLineWidth(0.125);
-        document.setDrawColor(gIncludedColor.r,
-                              gIncludedColor.g,
-                              gIncludedColor.b);
-        document.line(ppdf0.x, ppdf0.y, ppdf1.x, ppdf1.y);
-        document.circle(ppdf0.x, ppdf0.y, 0.35, "F");
-        document.circle(ppdf1.x, ppdf1.y, 0.35, "F");
 
-
-        for (let b = 0; b < crossings.length; b++) {
+        for (let b = 0; b < crossings.length-1; b++) {
             //console.log(crossings[b]);
             
-            const intersect = pp0.combo(crossings[b], pp1);
-            //console.log(intersect);
+            //const intersect = pp0.combo(crossings[b], pp1);
+            //console.log("intersect: ",intersect);
             
-            const pdfinter = toPDFcoord(intersect);            
-            //console.log("PDF coords: ", pdfinter);
-            
-            document.circle(pdfinter.x, pdfinter.y, 0.35, "F");
+            const breakA = p0.combo(crossings[b], p1);
+            const breakB = p0.combo(crossings[b+1], p1);
+
+            const edge_check = this.isSegmentVisible(breakA, breakB, camera, objects);
+
+            const projA = pp0.combo(crossings[b], pp1);
+            const projB = pp0.combo(crossings[b+1], pp1);
+
+            const pdfA = toPDFcoord(projA);
+            const pdfB = toPDFcoord(projB);
+
+            if (this.isSegmentVisible(breakA, breakB, camera, objects)) {
+                document.setDrawColor(gIncludedColor.r,gIncludedColor.g,gIncludedColor.b);
+                document.line(pdfA.x, pdfA.y, pdfB.x, pdfB.y);
+            }
+
+            //document.circle(pdfA.x, pdfA.y, 0.35, "F");
+            //document.circle(pdfB.x, pdfB.y, 0.35, "F");
             
         }
 
