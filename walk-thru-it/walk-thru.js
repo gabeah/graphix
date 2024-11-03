@@ -371,12 +371,16 @@ class SceneCamera {
         
         // Got an error when trying to call the y,z values, thus dumped the
         // values to a list and went from there
-        const locxyz = locPrime.components()
+        
+        // Provided by Jim (correcting my errors)
+        const d = location.minus(this.center).dot(this.into);
+        const x =  location.minus(this.center).dot(this.right)/d;
+        const y =  location.minus(this.center).dot(this.up)/d;
 
         const result = {
             point: location,
-            projection: new Point2d(-locxyz[1], locxyz[2]),
-            depth: toLocation.dx
+            projection: new Point2d(x, -y),
+            depth: d
         };
 
         // so.. much.. debugging..
