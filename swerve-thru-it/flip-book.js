@@ -792,6 +792,34 @@ function drawCameraPath() {
         glBeginEnd("SHOT")
         glPopMatrix();
     }
+
+    for (let shot of smth_shots) {
+
+        //
+        // Set up the transformations for placing a camera icon.
+        const position = shot.position;
+        const direction = shot.direction;
+        const angle = Math.atan2(direction.dy, direction.dx) * 180.0 / Math.PI;
+        //
+        // Perform the transformations.
+        glPushMatrix();
+        glTranslatef(position.x, position.y, position.z);
+        glRotatef(angle, 0.0, 0.0, 1.0);
+        glScalef(0.05, 0.05, 0.05);
+        //
+        // Color it.
+        if (shot == gShotBeingEdited) {
+            // Highlighted.
+            glColor3f(cc.r, cc.g, cc.b);
+        } else {
+            // Unhighlighted.
+            glColor3f(occ.r, occ.g, occ.b);
+        }
+        //
+        // Draw it.
+        glBeginEnd("SHOT")
+        glPopMatrix();
+    }
 }
 
 function draw() {

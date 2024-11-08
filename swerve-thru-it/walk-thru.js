@@ -268,7 +268,7 @@ class WalkThru {
         let shot_list = this.shots;
 
         // set the rounds of smoothing
-        let max_smoothness = 4;
+        let max_smoothness = 3;
         for (let i = 0; i < max_smoothness; i++) {
 
             // keey an index of all shots so we can reference previous ones
