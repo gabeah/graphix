@@ -81,6 +81,26 @@ class Shot {
         this.position = position0;
         this.direction = direction0;
     }
+
+    combo(amount, other) {
+        //console.log(amount)
+        //console.log(other)
+
+        // simple combo for position
+        const c_pos = this.position.combo(amount, other.position);
+        //const c_dir = this.direction.combo(amount, other.direction);
+
+        const vector_ratio = (this.direction.dot(other.direction)) / (this.direction.norm() * other.direction.norm());
+        const angle_diff = Math.acos(vector_ratio);
+
+        const angle_interpolate = angle_diff * amount;
+
+        const vec_ratio_interpolate = Math.cos(angle_interpolate);
+        const c_angle = this.direction.times(vec_ratio_interpolate)
+
+        //console.log("New position:", c_pos);
+        return new Shot(c_pos, c_angle);
+    }
 }
 
 class Placement {
@@ -231,19 +251,80 @@ class WalkThru {
         this.shot0 = new Shot(ORIGIN3D(), X_VECTOR3D());
         this.shots = [this.shot0];
         this.placements = [];
+
+        // Suggestion from Duncan, adding a new array of shots
+        // to hold the smooth interpolation of shots
+        this.smooth_shots = [];
     }
 
+    smoothen_path() {
+
+        //
+        // Make all the cameras from the walk-through's shots and smooth it out.
+        //
+        
+        // begin with the defined shot list
+        // we will save / update this as we do multiple rounds of smoothing
+        let shot_list = this.shots;
+
+        // set the rounds of smoothing
+        let max_smoothness = 4;
+        for (let i = 0; i < max_smoothness; i++) {
+
+            // keey an index of all shots so we can reference previous ones
+            let shot_count = 0;
+            let num_shots = shot_list.length;
+
+            // create a temporary list of smooth shots
+            let tmp_smooth = [];
+
+            // for a shot in the shot list
+            for (let shot of shot_list) {
+                //console.log(shot)
+                // check if this is the first shot of the series (which we keep)
+                if (shot_count == 0) {
+                    
+                    const start_shot = shot;
+                    tmp_smooth.push(start_shot);
+
+                } else {
+                    // Otherwise, create the interpolated shots
+                    const one_q = shot.combo(0.25, shot_list[shot_count-1]);
+                    const three_q = shot.combo(0.75, shot_list[shot_count-1]);
+
+                    tmp_smooth.push(three_q);
+                    tmp_smooth.push(one_q);
+
+                    // check if the shot is the final shot in the list, which we will keep
+                    if (shot_count == num_shots - 1) {
+                        const term_shot = shot
+                        tmp_smooth.push(term_shot);
+                    }
+                }
+                // increase shot count, loop again
+                shot_count += 1;
+            }
+            // update shot_list with the list we generated
+            shot_list = tmp_smooth;
+        }
+        // save the fully smoothed shotlist to a new attribute smooth_shots
+        this.smooth_shots = shot_list;
+    }
+
+
     toPDF(document, startNewPage) {
-        //
-        // Make all the cameras from the walk-through's shots.
-        //
+        
         const cameras = [];
-        for (let shot of this.shots) {
+        
+        // All shots are calculated in a different method of WalkThru, we go through
+        // a list of these smoothened shots
+        for (let shot of this.smooth_shots) {
             // Performs STEP 1.
             const camera = new SceneCamera(shot.position,
                                            shot.direction,
                                            Z_VECTOR3D());
             cameras.push(camera);
+
         }
 
         //
@@ -392,8 +473,7 @@ class SceneCamera {
         // console.log("result is:")
         // console.log(result)
 
-        return result;
-    }
+        return result;}
 }
 
 class SceneObject extends CGObject {
