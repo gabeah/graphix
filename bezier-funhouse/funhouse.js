@@ -145,12 +145,27 @@ class Curve {
             // COMPLETE THIS CODE!
             //
 
+            const p0 = this.controlPoints[0];
+            const p1 = this.controlPoints[1];
+            const p2 = this.controlPoints[2];
+
+
+
             // Currently just returns the three control points, rather
             // than sampling points on the entire curve.
             //
-            this.points = [this.controlPoints[0],
+            /*this.points = [this.controlPoints[0],
                            this.controlPoints[1],
                            this.controlPoints[2]];
+            */
+            for (let t = 0.0; t < 1.0; t += 0.1) {
+                let test_p0 = p0 * ((1-t));
+                console.log("Control Point 0:", p0);
+                console.log("Testing Point 0:", test_p0);
+                let ctrl_pt = p0.times(((1-t)**2)).plus(p1.times(2 * (1-t))).plus(p2.times(t ** 2));
+                this.points.push(ctrl_pt);
+            }
+
             this.compiled = true;
         }
     }
