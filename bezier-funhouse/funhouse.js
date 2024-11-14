@@ -196,9 +196,12 @@ class Curve {
             const p12 = p1.combo(0.5, p2);
             const p012 = p01.combo(0.5, p12)
 
+            // start from the left, recurse down further and draw
             this.drawBezier(p0, p01, p012);
             this.drawBezier(p012, p12, p2);
         }
+
+        return
     }
 
     update() {
