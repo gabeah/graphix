@@ -149,7 +149,7 @@ class Curve {
             const p1 = this.controlPoints[1];
             const p2 = this.controlPoints[2];
 
-
+            this.points = [];
 
             // Currently just returns the three control points, rather
             // than sampling points on the entire curve.
@@ -158,15 +158,46 @@ class Curve {
                            this.controlPoints[1],
                            this.controlPoints[2]];
             */
-            for (let t = 0.0; t < 1.0; t += 0.1) {
-                let test_p0 = p0 * ((1-t));
-                console.log("Control Point 0:", p0);
-                console.log("Testing Point 0:", test_p0);
-                let ctrl_pt = p0.times(((1-t)**2)).plus(p1.times(2 * (1-t))).plus(p2.times(t ** 2));
-                this.points.push(ctrl_pt);
-            }
+            /*
+            // "Old Version" which works over a smoothness parameter
+            for (let t = 0.0; t < 1.0; t += 1.0 / SMOOTHNESS) {
+                let p01 = p0.combo(t, p1);
+                let p12 = p1.combo(t, p2);
+                let p012 = p01.combo(t, p12);
+                //let ctrl_pt = p0.times(((1-t)**2)).plus(p1.times(2 * (1-t))).plus(p2.times(t ** 2));
+                this.points.push(p012);
+            }*/
+
+            this.drawBezier(p0, p1, p2);
 
             this.compiled = true;
+        }
+    }
+
+    // New Hotness
+    drawBezier(p0,p1,p2) {
+
+        // See if the we have recursed enough
+        if (((p0.dist(p1) + p1.dist(p2)) / p2.dist(p0)) <= 1 + EPSILON) {
+            
+            // Calculate the points for the bezier curve
+            const p01 = p0.combo(0.5, p1);
+            const p12 = p1.combo(0.5, p2);
+            const p012 = p01.combo(0.5, p12)
+
+            // Add to the path
+            this.points.push(p012)
+        
+        // Otherwise, recurse
+        } else {
+
+            // Calculate points
+            const p01 = p0.combo(0.5, p1);
+            const p12 = p1.combo(0.5, p2);
+            const p012 = p01.combo(0.5, p12)
+
+            this.drawBezier(p0, p01, p012);
+            this.drawBezier(p012, p12, p2);
         }
     }
 
