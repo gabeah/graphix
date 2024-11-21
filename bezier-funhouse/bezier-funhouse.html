@@ -690,46 +690,76 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
 
     // CHANGE THIS CODE!
 
-    const int smoothness = 3;
+    const int smoothness = 25;
     float height = 1.5;
 
     vec3 bezier_arr[smoothness];
     vec3 bezier_norms[smoothness];
     vec3 canonical_up = vec3(0.0,1.0,0.0);
 
-
-    for (int i = 0; i <= smoothness; i++) {
+    float t = 0.0;
+    for (int i = 0; i < smoothness; i++) {
         
+        vec2 point;
+
         if (i == 0) {
             bezier_arr[i] = vec3(cp0.x, 0.0, cp0.y);
-        } else if (i == smoothness) {
+        } else if (i == smoothness - 1) {
             bezier_arr[i] = vec3(cp1.x, 0.0, cp1.y);
         } else {
 
-            float t = float(i) / float(smoothness);
+            t += float(i) / float(smoothness);
+            float t1 = 1.0 - t;
             
-            vec2 cp01 = vec2(cp1 - cp0) * t;
-            vec2 cp12 = vec2(cp2 - cp1) * t;
+            //vec2 cp01 = vec2(cp1 - cp0) * t;
+            //vec2 cp12 = vec2(cp2 - cp1) * t;
 
-            vec2 cp012 = (cp12 - cp01) * t;
+            //vec2 cp012 = (cp12 - cp01) * t;
 
-            bezier_arr[i] = vec3(cp012.x, 0.0, cp012.y);
+            point = cp0 *t1*t1 + cp1*2.0*t1*t + cp2*t*t;
+
+
+            //bezier_arr[i] = vec3(cp012.x, 0.0, cp012.y);
+            bezier_arr[i] = vec3(point.x, 0, point.y);
 
         }
     }
 
     for (int j = 0; j < smoothness; j++) {
+        
+        if (j == 0) {
+            vec3 tmp_cp0 = vec3(cp0.x, 0, cp0.y);
+            vec3 tmp_cp1 = vec3(cp1.x, 0, cp1.y);
 
-        vec3 this2that = vec3(bezier_arr[j] - bezier_arr[j+1]);
-        vec3 tmp_norm = cross(canonical_up, this2that);
-        bezier_norms[j] = normalize(tmp_norm);
+            vec3 this2that = vec3(tmp_cp1 - tmp_cp0);
+            vec3 tmp_norm = cross(canonical_up, this2that);
 
-        vec4 pp0 = vec4(bezier_arr[j], 1);
-        vec4 pp1 = vec4(bezier_arr[j+1], 1);
-        vec4 plane_norm = vec4(bezier_norms[j], 0);
+            bezier_norms[j] = normalize(tmp_norm);
+        } /*else if (j == smoothness - 1) {
+            vec3 this2that = vec3(cp2 - cp1);
+            vec3 tmp_norm = cross(canonical_up, this2that);
 
-        isect = rayIntersectPanel(R, d, pp0, pp1, -plane_norm, height);
+            bezier_norms[j] = normalize(tmp_norm);
+        } */ else {
 
+            vec3 this2that = vec3(bezier_arr[j] - bezier_arr[j+1]);
+            vec3 tmp_norm = cross(canonical_up, this2that);
+
+            bezier_norms[j] = normalize(tmp_norm);
+        }
+    }
+
+    for (int k = 0; k < smoothness; k++) {
+
+        vec4 pp0 = vec4(bezier_arr[k], 1);
+        vec4 pp1 = vec4(bezier_arr[k+1], 1);
+        vec4 plane_norm = vec4(bezier_norms[k], 0);
+
+        isect = rayIntersectbadPanel(R, d, pp0, pp1, plane_norm, height);
+
+        if (isect.yes == 1) {
+            break;
+        }
     }
     vec2 v = cp1 - cp0;
 
@@ -741,8 +771,8 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
     vec3 normal = normalize(crs);
     vec3 jimn = normalize(vec3(-v.y,0,v.x));
 
-    isect = rayIntersectbadPanel(R, d, p0, p1, -vec4(jimn,0), height);
-    ISect jsect = rayIntersectPlane(R, d, p0, -vec4(jimn,0));
+    //isect = rayIntersectbadPanel(R, d, p0, p1, -vec4(jimn,0), height);
+    //ISect jsect = rayIntersectPlane(R, d, p0, -vec4(jimn,0));
 
     return isect;
 }
