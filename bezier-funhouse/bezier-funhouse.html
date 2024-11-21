@@ -690,7 +690,7 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
 
     // CHANGE THIS CODE!
 
-    const int smoothness = 25;
+    const int smoothness = 3;
     float height = 1.5;
 
     vec3 bezier_arr[smoothness];
@@ -698,31 +698,29 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
     vec3 canonical_up = vec3(0.0,1.0,0.0);
 
     float t = 0.0;
+    float t1 = 1.0;
     for (int i = 0; i < smoothness; i++) {
         
         vec2 point;
 
-        if (i == 0) {
-            bezier_arr[i] = vec3(cp0.x, 0.0, cp0.y);
-        } else if (i == smoothness - 1) {
-            bezier_arr[i] = vec3(cp1.x, 0.0, cp1.y);
-        } else {
-
-            t += float(i) / float(smoothness);
-            float t1 = 1.0 - t;
+        // (1-scalar)*this + scalar*other
             
-            //vec2 cp01 = vec2(cp1 - cp0) * t;
-            //vec2 cp12 = vec2(cp2 - cp1) * t;
+            vec2 cp01 = (cp0 * t1) + (cp1 * t);
+            vec2 cp12 = (cp1 * t1) + (cp0 * t);
 
-            //vec2 cp012 = (cp12 - cp01) * t;
+            vec2 cp012 = (cp01 * t1) + (cp01 * t);
 
-            point = cp0 *t1*t1 + cp1*2.0*t1*t + cp2*t*t;
+            // got from duncan, it kinda works
+            //point = cp2 *t1*t1 + cp1*2.0*t1*t + cp0*t*t;
 
 
-            //bezier_arr[i] = vec3(cp012.x, 0.0, cp012.y);
-            bezier_arr[i] = vec3(point.x, 0, point.y);
+            bezier_arr[i] = vec3(cp012.x, 0.0, cp012.y);
+            //bezier_arr[i] = vec3(point.x, 0, point.y);
 
-        }
+            t += 1.0 / float(smoothness);
+            t1 -= 1.0 / float(smoothness);
+
+        
     }
 
     for (int j = 0; j < smoothness; j++) {
@@ -735,12 +733,7 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
             vec3 tmp_norm = cross(canonical_up, this2that);
 
             bezier_norms[j] = normalize(tmp_norm);
-        } /*else if (j == smoothness - 1) {
-            vec3 this2that = vec3(cp2 - cp1);
-            vec3 tmp_norm = cross(canonical_up, this2that);
-
-            bezier_norms[j] = normalize(tmp_norm);
-        } */ else {
+        } else {
 
             vec3 this2that = vec3(bezier_arr[j] - bezier_arr[j+1]);
             vec3 tmp_norm = cross(canonical_up, this2that);
