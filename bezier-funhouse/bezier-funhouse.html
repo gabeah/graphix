@@ -231,7 +231,22 @@ ISect rayIntersectPlane(vec4 R, vec4 d, vec4 P, vec4 n) {
     return isect;
 }
 
-
+/* ------------------------------- rayIntersectPanel----------------------------------*/
+// This is a much more robust version after talking with Duncan about technique for doing calculations. Most notably checking for norms in both directions
+ISect rayIntersectPanel(vec4 R, vec4 d, vec3 p0, vec3 p1, vec3 norm){
+    ISect plane_hit = rayIntersectPlane(R,d, vec4(p0,1.0), vec4(norm,0.0));
+    float dp = dot(vec3(plane_hit.location)-p0, p1-p0);
+    if (plane_hit.yes == 1 && EPSILON < dp && dp< dot(p1-p0,p1-p0) && plane_hit.location.y < 1.5 && plane_hit.location.y > EPSILON){
+        return plane_hit;
+    }
+    plane_hit = rayIntersectPlane(R,d, vec4(p0,1.0), vec4(-norm,0.0));
+    dp = dot(vec3(plane_hit.location)-p0, p1-p0);
+    if (plane_hit.yes == 1 && EPSILON < dp && dp< dot(p1-p0,p1-p0) && plane_hit.location.y < 1.5 && plane_hit.location.y > EPSILON){
+        return plane_hit;
+    }
+    return NO_INTERSECTION();
+}
+/*------------------------------------------------------------------------------------*/
 // rayIntersect{Floor,*Wall,Ceiling,Entry}
 //
 // These functions check to see if a ray hits any of the four
@@ -434,6 +449,61 @@ bool rayHitsBezierBefore(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2, float dis
 
     // CHANGE THIS CODE!
 
+    /*------NOTE: THIS IS A CARBON COPY OF THE rayIntersectBezier with the only change of checking if the distance of the
+            intersection is closer than a different object (thereby casting a shadow) ------------------------------------*/
+
+    const int smoothness = 25;
+    float height = 1.5;
+
+    vec3 bezier_arr[smoothness];
+    vec3 bezier_norms[smoothness];
+    vec3 canonical_up = vec3(0.0,1.0,0.0);
+
+    
+    const float dt = 1.0 / float(smoothness);
+    for (int i = 0; i <= smoothness; i++) {
+        
+        float t = float(i)/float(smoothness);
+        float x = float((1.0-t)*(1.0-t) * cp0.x) + float(2.0 * (1.0-t) * t * cp1.x) + float(t* t * cp2.x);
+        float y = ((1.0-t)*(1.0-t) * cp0.y) + (2.0 * (1.0-t) * t * cp1.y) + (t* t * cp2.y);
+        bezier_arr[i] = vec3(x,0,y);
+        
+        
+    }
+
+    for (int j = 0; j < smoothness; j++) {
+        
+        if (j == 0) {
+            vec3 tmp_cp0 = vec3(cp0.x, 0, cp0.y);
+            vec3 tmp_cp1 = vec3(cp1.x, 0, cp1.y);
+
+            vec3 this2that = vec3(tmp_cp1 - tmp_cp0);
+            vec3 tmp_norm = cross(canonical_up, this2that);
+
+            bezier_norms[j] = normalize(tmp_norm);
+        } else {
+
+            vec3 this2that = vec3(bezier_arr[j] - bezier_arr[j+1]);
+            vec3 tmp_norm = cross(canonical_up, this2that);
+
+            bezier_norms[j] = normalize(tmp_norm);
+        }        
+    }
+
+    ISect bezierIntersect = NO_INTERSECTION();
+    
+    for(int i = 0; i <smoothness; i++){
+        vec3 planeNormalized = normalize(bezier_norms[i]);
+        bezierIntersect = rayIntersectPanel(R, d, bezier_arr[i], bezier_arr[i+1], -planeNormalized);
+        if(bezierIntersect.yes == 1){
+
+            // Only change, instead of doing normal recalculation, just check the distance
+            vec4 loc = bezierIntersect.location;
+            if (bezierIntersect.distance <= distance) {
+                return true;
+            } 
+        } 
+    }
     return false; // No shadow.
 }
 
@@ -636,12 +706,14 @@ ISect rayClosestSphere(vec4 R, vec4 d) {
     return isect;
 }
 
+// original attempt at doing rayIntersectPanel, I didn't do thorough enough checks. The correct rayIntersectPanel sits around line 234
+/*
 ISect rayIntersectbadPanel(vec4 R, vec4 d, vec4 pp0, vec4 pp1, vec4 pn, float h) {
 
-    vec3 p0 = vec3(pp0);
-    vec3 p1 = vec3(pp1);
+    vec3 p0 = pp0.xyz;
+    vec3 p1 = pp1.xyz;
 
-    ISect panel_intersect = rayIntersectPlane(R, d, pp0, pn);
+    ISect panel_intersect = rayIntersectPlane(R, d, pp1, pn);
     float dp = dot(vec3(panel_intersect.location) - p0, p1 - p0);
 
     if (panel_intersect.yes == 1 && dp > EPSILON && dp < dot(p1 - p0, p1 - p0) && panel_intersect.location.y <= h && panel_intersect.location.y >= EPSILON) {
@@ -650,21 +722,7 @@ ISect rayIntersectbadPanel(vec4 R, vec4 d, vec4 pp0, vec4 pp1, vec4 pn, float h)
 
     return NO_INTERSECTION();
 
-}
-
-ISect rayIntersectPanel(vec4 R, vec4 d, vec3 p0, vec3 p1, vec3 norm){
-    ISect plane_hit = rayIntersectPlane(R,d, vec4(p0,1.0), vec4(norm,0.0));
-    float dp = dot(vec3(plane_hit.location)-p0, p1-p0);
-    if (plane_hit.yes == 1 && EPSILON < dp && dp< dot(p1-p0,p1-p0) && plane_hit.location.y < 1.5 && plane_hit.location.y > EPSILON){
-        return plane_hit;
-    }
-    plane_hit = rayIntersectPlane(R,d, vec4(p0,1.0), vec4(-norm,0.0));
-    dp = dot(vec3(plane_hit.location)-p0, p1-p0);
-    if (plane_hit.yes == 1 && EPSILON < dp && dp< dot(p1-p0,p1-p0) && plane_hit.location.y < 1.5 && plane_hit.location.y > EPSILON){
-        return plane_hit;
-    }
-    return NO_INTERSECTION();
-}
+}*/
 
 ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
     //
@@ -685,47 +743,41 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
     //
 
     // Reference the INTERSECT_PLANE code around L.188
-
-    ISect isect = NO_INTERSECTION();
-
     // CHANGE THIS CODE!
 
-    const int smoothness = 3;
+    // Initialize the smoothness and height variables for the calculation
+    const int smoothness = 25;
     float height = 1.5;
 
+    // Initialize an array for the points and the normals
     vec3 bezier_arr[smoothness];
     vec3 bezier_norms[smoothness];
+    // Also initialize a canon upwards for calculating normals
     vec3 canonical_up = vec3(0.0,1.0,0.0);
+    
+    // loop through all bezier_arr positions
+    for (int i = 0; i <= smoothness; i++) {
 
-    float t = 0.0;
-    float t1 = 1.0;
-    for (int i = 0; i < smoothness; i++) {
+        // Calculate the scalar t based off smoothness
+        float t = float(i)/float(smoothness);
+
+        // calculate the x & y positions using a affine combination method
+        float x = float((1.0-t)*(1.0-t) * cp0.x) + float(2.0 * (1.0-t) * t * cp1.x) + float(t* t * cp2.x);
+        float y = ((1.0-t)*(1.0-t) * cp0.y) + (2.0 * (1.0-t) * t * cp1.y) + (t* t * cp2.y);
+
+        // save the info to our points array
+        bezier_arr[i] = vec3(x,0,y);
         
-        vec2 point;
-
-        // (1-scalar)*this + scalar*other
-            
-            vec2 cp01 = (cp0 * t1) + (cp1 * t);
-            vec2 cp12 = (cp1 * t1) + (cp0 * t);
-
-            vec2 cp012 = (cp01 * t1) + (cp01 * t);
-
-            // got from duncan, it kinda works
-            //point = cp2 *t1*t1 + cp1*2.0*t1*t + cp0*t*t;
-
-
-            bezier_arr[i] = vec3(cp012.x, 0.0, cp012.y);
-            //bezier_arr[i] = vec3(point.x, 0, point.y);
-
-            t += 1.0 / float(smoothness);
-            t1 -= 1.0 / float(smoothness);
-
         
     }
 
+    // loop again, this time for normals
     for (int j = 0; j < smoothness; j++) {
         
+        // Make an exception for normals calculation to have the first normal be perpendicular to the vector
+        // defined as CP1 - CP0
         if (j == 0) {
+
             vec3 tmp_cp0 = vec3(cp0.x, 0, cp0.y);
             vec3 tmp_cp1 = vec3(cp1.x, 0, cp1.y);
 
@@ -733,6 +785,8 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
             vec3 tmp_norm = cross(canonical_up, this2that);
 
             bezier_norms[j] = normalize(tmp_norm);
+
+        // Otherwise take the cross product of the vector of the panel, normalize it, and save it
         } else {
 
             vec3 this2that = vec3(bezier_arr[j] - bezier_arr[j+1]);
@@ -742,32 +796,33 @@ ISect rayIntersectBezier(vec4 R, vec4 d, vec2 cp0, vec2 cp1, vec2 cp2) {
         }
     }
 
-    for (int k = 0; k < smoothness; k++) {
+    // Start off assuming there is no intersection
+    ISect bezierIntersect = NO_INTERSECTION();
+    
+    // loop one final time, this time through both arrays
+    for(int i = 0; i <smoothness; i++){
 
-        vec4 pp0 = vec4(bezier_arr[k], 1);
-        vec4 pp1 = vec4(bezier_arr[k+1], 1);
-        vec4 plane_norm = vec4(bezier_norms[k], 0);
+        // use rayIntersectPanel, it is described on line 234. It will run rayIntersectPlane and check if the intersection point with the mirror
+        // falls within the dimentions of a panel
+        bezierIntersect = rayIntersectPanel(R, d, bezier_arr[i], bezier_arr[i+1], -bezier_norms[i]);
 
-        isect = rayIntersectbadPanel(R, d, pp0, pp1, plane_norm, height);
+        // if there was a panel intersection...
+        if(bezierIntersect.yes == 1){
 
-        if (isect.yes == 1) {
-            break;
+            vec4 loc = bezierIntersect.location;
+            
+            // take an affine combination of the normals based on where the ray intersected the plane (taking a combination of the two surrounding normals)
+            float distRatio1 = distance(vec2(loc.xz), vec2(bezier_arr[i].xz)) / (distance(vec2(loc.xz), vec2(bezier_arr[i].xz)) + distance(vec2(loc.xz), vec2(bezier_arr[i+1].xz)));
+            float distRatio2 = distance(vec2(loc.xz), vec2(bezier_arr[i+1].xz)) / (distance(vec2(loc.xz), vec2(bezier_arr[i].xz)) + distance(vec2(loc.xz), vec2(bezier_arr[i+1].xz)));
+            
+            // overwrite the normal with this improved one
+            bezierIntersect.normal = vec4(bezier_norms[i+1] * distRatio1 + bezier_norms[i] * distRatio2, 0.0);
+            
+            return bezierIntersect;}
         }
-    }
-    vec2 v = cp1 - cp0;
 
-    vec4 p0 = vec4(cp0.x, 0.0, cp0.y, 1.0);
-    vec4 p1 = vec4(cp1.x, 0.0, cp1.y, 1.0);
-
-    vec3 along = vec3(v.x, 0.0, v.y);
-    vec3 crs = cross(along, canonical_up);
-    vec3 normal = normalize(crs);
-    vec3 jimn = normalize(vec3(-v.y,0,v.x));
-
-    //isect = rayIntersectbadPanel(R, d, p0, p1, -vec4(jimn,0), height);
-    //ISect jsect = rayIntersectPlane(R, d, p0, -vec4(jimn,0));
-
-    return isect;
+    // If there was no intersection, toss it all out and return no intersection
+    return NO_INTERSECTION();
 }
 
 ISect rayIntersectMirror(vec4 R, vec4 d) {
