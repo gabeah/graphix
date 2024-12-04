@@ -447,6 +447,30 @@ class Surface {
         return f;
     }
     
+    split_pos(p0, p1, q0, q1) {
+
+        console.log(p0, p1, q0, q1);
+
+        const P0 = p0.minus(p0.minus(ORIGIN3D()).times(3/8));
+        const P1 = p1.minus(p1.minus(ORIGIN3D()).times(3/8));
+        const Q0 = q0.minus(q0.minus(ORIGIN3D()).times(1/8));
+        const Q1 = q1.minus(q1.minus(ORIGIN3D()).times(1/8));
+
+        console.log("P0:", P0);
+        console.log("P1:", P1);
+        console.log("Q0:", Q0);
+        console.log("Q1:", Q1);
+
+        const location = P0.plus(P1.minus(ORIGIN3D())).plus(Q0.minus(ORIGIN3D())).plus(Q1.minus(ORIGIN3D()));
+        console.log(location);
+        return location;
+
+    }
+
+    clone_pos(P) {
+        const location = 0;
+    }
+
     subdivide() {
         //
         // Subdivide this surface by Loop subdivision, returning the
@@ -468,7 +492,7 @@ class Surface {
         //
         // THE CODE BELOW IS BOGUS! It copies the tetrahedron.
         //
-        
+        /*
         const tetra = gSurfaces.get("tetra");
         // Copy the tetrahedron vertcies.
         for (let v of tetra.allVertices()) {
@@ -481,8 +505,42 @@ class Surface {
             const v2 = f.edge.prev.target.id;
             R.makeFace(v0,v1,v2);
         }
+        */
 
-        //
+        for (let f of S.allFaces()) {
+            const vi0 = R.makeVertex(f.edge.target.position);
+            const vi1 = R.makeVertex(f.edge.next.target.position);
+            const vi2 = R.makeVertex(f.edge.prev.target.position);
+
+            f.edge.target.clone = vi0;
+            f.edge.next.target.clone = vi1;
+            f.edge.prev.target.clone = vi2;
+
+            const split01_loc = R.split_pos(vi0.position, vi1.position, f.edge.twin.next.target.position, vi2.position);
+            const split12_loc = R.split_pos(vi1.position, vi2.position, f.edge.next.twin.next.target.position, vi0.position);
+            const split20_loc = R.split_pos(vi2.position, vi0.position, f.edge.prev.twin.next.target.position, vi1.position);
+
+            const split01 = R.makeVertex(split01_loc);
+            const split12 = R.makeVertex(split12_loc);
+            const split20 = R.makeVertex(split20_loc);
+
+            console.log(R.vertices.has(split01.id));
+            console.log(split12.id);
+            console.log(split20.id);
+            
+            f.edge.split = split01;
+            f.edge.next.split = split12;
+            f.edge.prev.split = split20;
+
+            const newF0 = R.makeFace(split01.id, split12.id, split20.id);
+            const newF1 = R.makeFace(vi0.id, split01.id, split20.id);
+            const newF2 = R.makeFace(split01.id, vi1.id, split12.id);
+            const newf3 = R.makeFace(split12.id, vi2.id, split20.id);
+
+            //debugger;
+
+        }
+
         R.regirth();
         return R;
     }

@@ -287,7 +287,9 @@ class Cycle {
 
         glTranslatef(0.0,UPDOWN_ADJUST,0.0);
         const face = this.face;
+        //console.log("IM ON FACE:", face);
         const edge = this.edge;
+        //console.log("IM HEADED TOWARDS EDGE: ", edge);
         const next = this.nextEdge;
         const pFrom = edge.source.position.combo(0.5,edge.target.position);
         const pTo   = next.source.position.combo(0.5,next.target.position);
