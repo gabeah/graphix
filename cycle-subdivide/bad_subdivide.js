@@ -451,10 +451,25 @@ class Surface {
 
         console.log(p0, p1, q0, q1);
 
-        // provided by duncan
-        const location = p0.combo(1/2, p1).combo(1/4, q0.combo(1/2, q1))
+        const P0 = new Point3d(p0.x * (3/8), p0.y * (3/8), p0.z * (3/8));
+        const P1 = new Point3d(p1.x * (3/8), p1.y * (3/8), p1.z * (3/8));
+        const Q0 = new Point3d(q0.x * (1/8), q0.y * (1/8), q0.z * (1/8));
+        const Q1 = new Point3d(q1.x * (1/8), q1.y * (1/8), q1.z * (1/8));
 
-        console.log();
+        // const P0 = p0.minus(p0.minus(ORIGIN3D()).times(3/8));
+        // const P1 = p1.minus(p1.minus(ORIGIN3D()).times(3/8));
+        // const Q0 = q0.minus(q0.minus(ORIGIN3D()).times(1/8));
+        // const Q1 = q1.minus(q1.minus(ORIGIN3D()).times(1/8));
+
+        // console.log("P0:", P0);
+        // console.log("P1:", P1);
+        // console.log("Q0:", Q0);
+        // console.log("Q1:", Q1);
+
+
+
+        const location = P0.plus(P1.minus(ORIGIN3D())).plus(Q0.minus(ORIGIN3D())).plus(Q1.minus(ORIGIN3D()));
+        console.log(location);
         return location;
 
     }
@@ -477,26 +492,25 @@ class Surface {
 
             crawler = crawler.twin.next;
             if (crawler.id == source_edge.id) {all_checked = true;}
-
             console.log(crawler.id, "->", crawler.target.id);
-            
             p_neighbor_ids.push(crawler.target.id);
             p_neighbor_pos.push(crawler.target.position);
 
         }
 
-        let k = p_neighbor_pos.length;
+        console.log(p_neighbor_ids);
 
-        let beta = 5/8 - Math.pow(3/8 + 1/4 * Math.cos(2 * Math.PI /k), 2);
+        const k = p_neighbor_ids.length;
+        const beta = 5/8 - (3/8)+((1/4)*Math.cos((2 * Math.PI) / k))**2;
 
-        let scalars = []
-        for (let i = 0; i < k; i++){
-            scalars.push(beta/k);
-        }
+        const b_k = beta/k;
+        let scalars = [];
 
-        let new_pos = P.position.combos(scalars,p_neighbor_pos);
+        for (let i = 0; i < p_neighbor_pos.length; i++) {scalars.push(b_k);}
+        
+        const pos_sum = P.position.combos(scalars, p_neighbor_pos);
 
-        return new_pos
+        return pos_sum;
     }
 
     subdivide() {
@@ -521,41 +535,6 @@ class Surface {
         // THE CODE BELOW IS BOGUS! It copies the tetrahedron.
         //
 
-        // Step 1: Start by making all vertices and clone the position
-        for (let v of S.allVertices()) {
-            const v_pos = R.clone_pos(v);
-
-            const clone_v = R.makeVertex(v_pos);
-            v.clone = clone_v;
-        }
-
-        for (let e of S.allEdges()) {
-            
-            if (e.split == null) {
-                const e_split_loc = R.split_pos(e.source.position, e.target.position, e.twin.next.target.position, e.prev.source.position);
-                const split_v = R.makeVertex(e_split_loc);
-                e.split = split_v;
-                e.twin.split = split_v;
-            }
-        }
-
-        for (let f of S.allFaces()) {
-            const vi0 = f.edge.source.clone;
-            const vi1 = f.edge.target.clone;
-            const vi2 = f.edge.prev.source.clone;
-
-            const sp01 = f.edge.split;
-            const sp12 = f.edge.next.split;
-            const sp20 = f.edge.prev.split;
-
-            console.log("Creating faces")
-            const newF0 = R.makeFace(sp01.id, sp12.id, sp20.id);
-            const newF1 = R.makeFace(vi0.id, sp01.id, sp20.id);
-            const newF2 = R.makeFace(sp01.id, vi1.id, sp12.id);
-            const newf3 = R.makeFace(sp12.id, vi2.id, sp20.id);            
-        }
-
-/*
         for (let f of S.allFaces()) {
             console.log("Making vertices")
 
@@ -611,7 +590,7 @@ class Surface {
 
             //debugger;
 
-        }*/
+        }
 
         R.regirth();
         return R;
