@@ -164,7 +164,7 @@ class Mass {
          */
 
         // WRITE THIS!
-        //console.log("computing step")
+        // console.log("computing step")
         // This causes chaos, use verlet instead
         //this.position = this.prev_pos.plus((this.velocity.times(timeStep)))
         //this.velocity = this.prev_vel.plus(acceleration.times(timeStep))
@@ -223,11 +223,11 @@ class Spring {
          * and the position of the other mass.
          */
 
-        // WRITE THIS!
         //Figure out what end of the spring is onMass
         let unit_vec = new Vector3d(0.0,0.0,0.0);
         let displacement_vec = new Vector3d(0.0,0.0,0.0);
 
+        // calculate the displacement vector and the unit vector
         if (onMass == this.mass1) {
             displacement_vec = this.mass2.position.minus(onMass.position);
             unit_vec = displacement_vec.unit();
@@ -236,8 +236,10 @@ class Spring {
             unit_vec = displacement_vec.unit();
         }
 
-        let spring_force = this.restingLength - displacement_vec.norm();
+        // check the spring force based on the resting length
+        let spring_force = displacement_vec.norm() - this.restingLength;
 
+        // take unit vector and scale by spring force and stiffness to showcase the force upon each spring
         let force = unit_vec.times(spring_force * this.stiffness);
         return force;
     }
@@ -257,10 +259,12 @@ class Spring {
         
         if (length > (gDeformation * this.restingLength)) {
             const unit = m1_pos.minus(m2_pos).unit();
+            
+            // Find amount we need to scale by:
             const over_length = length - (this.restingLength * gDeformation);
 
-            if (m1_fix && m2_fix) {
-                // Find amount we need to scale by:
+            // Constrain based on whether or not nodes are fixed
+            if (!m1_fix && !m2_fix) {
                 this.mass1.position = m1_pos.minus(unit.times(over_length/2));
                 this.mass2.position = m2_pos.plus(unit.times(over_length/2));
             } else if (m1_fix) {
@@ -568,13 +572,15 @@ class Cloth {
                 }
                 else if (c+1 < this.columns) {right = true;}
                 
+                // go through and connect going from left -> right
+                // also connecting the south east and north east edges
                 if (below) {
                     const s_mass = this.getMass(r+1, c);
                     const s = new Spring(c_mass, s_mass, gStiffness);
                     this.springs.push(s);
                     if (flex_below) {
                         const fs_mass = this.getMass(r+2, c);
-                        const fs = new Spring(c_mass, fs_mass, gBend * gStiffness);
+                        const fs = new Spring(c_mass, fs_mass, gStiffness * gBend);
                         this.springs.push(fs);
                     }
                 }
@@ -584,7 +590,7 @@ class Cloth {
                     this.springs.push(e);
                     if (flex_right) {
                         const fe_mass = this.getMass(r, c+2);
-                        const fe = new Spring(c_mass, fe_mass, gBend * gStiffness);
+                        const fe = new Spring(c_mass, fe_mass, gStiffness * gBend);
                         this.springs.push(fe);
                     }
                 }
@@ -592,11 +598,12 @@ class Cloth {
                     const se_mass = this.getMass(r+1, c+1);
                     const se = new Spring(c_mass, se_mass, gStiffness);
                     this.springs.push(se);
-                    if (r > 0) {
-                        const ne_mass = this.getMass(r-1, c+1);
-                        const ne = new Spring(c_mass, ne_mass, gStiffness);
-                        this.springs.push(ne)
-                    }
+                    
+                }
+                if (r > 0) {
+                    const ne_mass = this.getMass(r-1, c+1);
+                    const ne = new Spring(c_mass, ne_mass, gStiffness);
+                    this.springs.push(ne)
                 }
             }
         }
