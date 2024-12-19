@@ -85,6 +85,10 @@ class Mass {
         //
         this.fixed       = false;  // Does the particle move?
         this.springs     = [];     // What other masses is it connected to?
+
+        this.prev_pos = position0;
+        this.prev_prev_pos = position0;
+        this.velocity = this.velocity0;
     }
         
     addSpring(spring) {
@@ -102,7 +106,8 @@ class Mass {
          * You may need to reset your other simulation state.
          */
         this.position    = this.position0;
-        this.velocity    = this.velocity0;
+        this.prev_pos    = this.position0;
+        this.prev_prev_pos = this.position0;
         //
 
         // WRITE THIS!
@@ -115,6 +120,10 @@ class Mass {
          */
         
         // WRITE THIS!
+
+        this.prev_pos = this.position;
+        this.prev_prev_pos = this.prev_pos;
+
     }
 
     computeAcceleration() {
@@ -132,7 +141,16 @@ class Mass {
         
         let force = new Vector3d(0.0,0.0,0.0);
 
+        for (let spring of this.springs) {
+            force = force.plus(spring.computeForce(this));
+        }
+
+        force.dy = force.dy - (this.mass * gGravity);
+
+        force.dz = force.dz + (gWind * gWindOn);
+
         // WRITE THIS!
+        force = force.minus(this.velocity.times(gDrag));
 
         return force.times(1.0/this.mass);
     }
@@ -146,6 +164,18 @@ class Mass {
          */
 
         // WRITE THIS!
+        //console.log("computing step")
+        // This causes chaos, use verlet instead
+        //this.position = this.prev_pos.plus((this.velocity.times(timeStep)))
+        //this.velocity = this.prev_vel.plus(acceleration.times(timeStep))
+        const p_t = this.prev_pos;
+        const p_t_h = this.prev_prev_pos;
+        const h = timeStep;
+        const v_t = this.velocity;
+
+        this.position = p_t.plus(v_t.times(h)).plus(acceleration.times(h ** 2));
+        this.velocity = p_t.minus(p_t_h);
+
     }
 
     makeStep() {
@@ -194,8 +224,22 @@ class Spring {
          */
 
         // WRITE THIS!
+        //Figure out what end of the spring is onMass
+        let unit_vec = new Vector3d(0.0,0.0,0.0);
+        let displacement_vec = new Vector3d(0.0,0.0,0.0);
 
-        return new Vector3d(0.0,0.0,0.0);
+        if (onMass == this.mass1) {
+            displacement_vec = this.mass2.position.minus(onMass.position);
+            unit_vec = displacement_vec.unit();
+        } else {
+            displacement_vec = this.mass1.position.minus(onMass.position);
+            unit_vec = displacement_vec.unit();
+        }
+
+        let spring_force = this.restingLength - displacement_vec.norm();
+
+        let force = unit_vec.times(spring_force * this.stiffness);
+        return force;
     }
 
     constrain() {
@@ -204,9 +248,31 @@ class Spring {
          * their distance apart is no more than `restingLength * gDeformation`.
          */
         
-        // WRITE THIS!
+        let m1_pos = this.mass1.position;
+        let m2_pos = this.mass2.position;
+        const m1_fix = this.mass1.fixed;
+        const m2_fix = this.mass2.fixed;
+
+        const length = m1_pos.minus(m2_pos).norm();
+        
+        if (length > (gDeformation * this.restingLength)) {
+            const unit = m1_pos.minus(m2_pos).unit();
+            const over_length = length - (this.restingLength * gDeformation);
+
+            if (m1_fix && m2_fix) {
+                // Find amount we need to scale by:
+                this.mass1.position = m1_pos.minus(unit.times(over_length/2));
+                this.mass2.position = m2_pos.plus(unit.times(over_length/2));
+            } else if (m1_fix) {
+                this.mass2.position = m2_pos.plus(unit.times(over_length));
+            } else {
+                this.mass1.position = m1_pos.minus(unit.times(over_length));
+            }
+        } 
+        
     }
-}
+}    
+
 
 //
 // Cloth
@@ -236,6 +302,7 @@ class Cloth {
         // Connect them up.
         //
         this.connectMasses();
+        console.log("connected")
 
         // Fix the two corners.
         //
@@ -477,6 +544,59 @@ class Cloth {
          */
 
         // WRITE THIS!
+
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.columns; c++) {
+
+                const c_mass = this.getMass(r, c);
+
+                let below = false;
+                let right = false;
+                let flex_below = false;
+                let flex_right = false;
+
+                // Set conditions, we want to not overcount springs on the mesh
+                // since we start in the upper-left corner, we will build out
+                if (r+2 < this.rows) {
+                    below, flex_below = true;
+                    flex_below = true;
+                }
+                else if (r+1 < this.rows) { below = true;}
+                if (c+2 < this.columns) {
+                    right = true;
+                    flex_right = true;
+                }
+                else if (c+1 < this.columns) {right = true;}
+                
+                if (below) {
+                    const s_mass = this.getMass(r+1, c);
+                    const s = new Spring(c_mass, s_mass, gStiffness);
+                    this.springs.push(s);
+                    if (flex_below) {
+                        const fs_mass = this.getMass(r+2, c);
+                        const fs = new Spring(c_mass, fs_mass, gBend * gStiffness);
+                        this.springs.push(fs);
+                    }
+                }
+                if (right) {
+                    const e_mass = this.getMass(r, c+1);
+                    const e = new Spring(c_mass, e_mass, gStiffness);
+                    this.springs.push(e);
+                    if (flex_right) {
+                        const fe_mass = this.getMass(r, c+2);
+                        const fe = new Spring(c_mass, fe_mass, gBend * gStiffness);
+                        this.springs.push(fe);
+                    }
+                }
+                if (below && right) {
+                    const se_mass = this.getMass(r+1, c+1);
+                    const se = new Spring(c_mass, se_mass, gStiffness);
+                    this.springs.push(se);
+                }
+
+                
+            }
+        }
     }
 }
 
