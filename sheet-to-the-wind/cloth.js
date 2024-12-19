@@ -147,9 +147,9 @@ class Mass {
 
         force.dy = force.dy - (this.mass * gGravity);
 
+        // I think this affects the sheet globally as opposed to a specific point on the sheet by the propeller
         force.dz = force.dz + (gWind * gWindOn);
 
-        // WRITE THIS!
         force = force.minus(this.velocity.times(gDrag));
 
         return force.times(1.0/this.mass);
@@ -592,9 +592,12 @@ class Cloth {
                     const se_mass = this.getMass(r+1, c+1);
                     const se = new Spring(c_mass, se_mass, gStiffness);
                     this.springs.push(se);
+                    if (r > 0) {
+                        const ne_mass = this.getMass(r-1, c+1);
+                        const ne = new Spring(c_mass, ne_mass, gStiffness);
+                        this.springs.push(ne)
+                    }
                 }
-
-                
             }
         }
     }
